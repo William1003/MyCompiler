@@ -10,9 +10,11 @@ int main()
 	string ifname = "testfile.txt";
 	string ofname = "output.txt";
 	Output myOutput(ofname);
+	ErrorHandler errorHandler;
 	LexicalAnalysis lexicalAnalysis(myOutput);
 	lexicalAnalysis.readFile(ifname);
-	SyntaxAnalysis syntaxAnalysis(lexicalAnalysis);
-	syntaxAnalysis.doLexicalAnalysis();
+	SyntaxAnalysis syntaxAnalysis(errorHandler, lexicalAnalysis, myOutput);
+	syntaxAnalysis.startSyntaxAnalysis();
+	myOutput.outputToFile();
 	return 0;
 }

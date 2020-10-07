@@ -33,6 +33,9 @@
     <ClInclude Include="src\SyntaxAnalysis.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\ErrorHandler.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\constValue.cpp">
@@ -48,6 +51,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\SyntaxAnalysis.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ErrorHandler.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

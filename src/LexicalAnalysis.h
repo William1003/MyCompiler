@@ -10,26 +10,38 @@ using namespace std;
 class LexicalAnalysis
 {
 private:
-	string fileContent;		//ÎÄ¼şÄÚÈİ
-	long fileLength;		//ÎÄ¼ş´óĞ¡
-	int index;				//ÎÄ¼şË÷Òı
-	char c;					//µ±Ç°¶ÁÈëµÄ×Ö·û
-	string token;			//µ±Ç°¶ÁÈëµÄsymbol
-	enum SymbolCode symbolCode;			//µ±Ç°¶ÁÈëµÄsymbolµÄ±êºÅ
-	int line;				//¼ÇÂ¼µ±Ç°ĞĞºÅ 	
-	bool finish;			//ÊÇ·ñ¶ÁÈ¡½áÊø
+	string fileContent;		//æ–‡ä»¶å†…å®¹
+	long fileLength;		//æ–‡ä»¶å¤§å°
+	int index;				//æ–‡ä»¶ç´¢å¼•
+	int backupIndex;
+	char c;					//å½“å‰è¯»å…¥çš„å­—ç¬¦
+	string token;			//å½“å‰è¯»å…¥çš„symbol
+	string backupToken;
+	SymbolCode symbolCode;			//å½“å‰è¯»å…¥çš„symbolçš„æ ‡å·
+	SymbolCode backupSymbolCode;
+	int line;				//è®°å½•å½“å‰è¡Œå· 	
+	bool finish;			//æ˜¯å¦è¯»å–ç»“æŸ
+	bool autoComplete;
+	int value;
 	Output& output;
-	SymbolCode reserver();			//²é±£Áô×Ö
-	void getChar();			//¶ÁÏÂÒ»¸ö×Ö·û
-	void retract();			//»ØÍËÒ»¸ö×Ö·û
+	SymbolCode reserver();			//æŸ¥ä¿ç•™å­—
+	void getChar();			//è¯»ä¸‹ä¸€ä¸ªå­—ç¬¦
+	void retract();			//å›é€€ä¸€ä¸ªå­—ç¬¦
 
 public:
 	LexicalAnalysis(Output& output);
 	void readFile(string filename);
-	int getSymbolCode();
+	SymbolCode getSymbolCode();
 	string getToken();
-	int getLine();
+	int getLineCount();
 	bool getNextSymbol();
+	int getValue();
+	bool isFinish();
+	void setAutoComplete();
+	int getIndex();
+	void setIndex(int index);
+	void backup();
+	void restore();
 };
 
 #endif

@@ -11,11 +11,17 @@ class Output
 {
 private:
 	ofstream out;
+	string outputContent;
+	string backupString;
+	ofstream debugFile;
 
 public:
 	Output(string& ofname);
 	void lexicalAnalysisOutput(SymbolCode symbolCode, string token);
-	void syntaxAnalysisOutput();
+	void syntaxAnalysisOutput(string syntaxName);
+	void backup();
+	void retract();
+	void outputToFile();
 };
 
 #endif // !_OUTPUT_H_

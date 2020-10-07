@@ -13,6 +13,7 @@ LexicalAnalysis::LexicalAnalysis(Output& output):output(output)
 	c = '\0';
 	finish = true;
 	line = 1;
+	value = 0;
 	token.clear();
 	fileContent.clear();
 }
@@ -61,7 +62,7 @@ void LexicalAnalysis::readFile(string filename)
 	cout << "Read File Succeed! File Size is " << fileLength << " Bytes." << endl;
 }
 
-int LexicalAnalysis::getSymbolCode()
+SymbolCode LexicalAnalysis::getSymbolCode()
 {
 	return symbolCode;
 }
@@ -71,7 +72,7 @@ string LexicalAnalysis::getToken()
 	return token;
 }
 
-int LexicalAnalysis::getLine()
+int LexicalAnalysis::getLineCount()
 {
 	return line;
 }
@@ -144,11 +145,23 @@ SymbolCode LexicalAnalysis::reserver() {
 
 bool LexicalAnalysis::getNextSymbol() 
 {
-	//Çå¿Õtoken£¬¶ÁÈ¡µÚÒ»¸ö×Ö·û
+	if (!token.empty())
+	{
+		output.lexicalAnalysisOutput(symbolCode, token);
+	}
+
+	//è‡ªåŠ¨è¡¥å…¨
+	if (autoComplete)
+	{
+		autoComplete = false;
+		return true;
+	}
+
+	//æ¸…ç©ºtokenï¼Œè¯»å–ç¬¬ä¸€ä¸ªå­—ç¬¦
 	token.clear();
 	getChar();
 
-	//Ìø¹ý¿Õ°×·û
+	//è·³è¿‡ç©ºç™½ç¬¦
 	while (isspace(c)) 
 	{
 		if (isNewline(c)) 
@@ -156,34 +169,34 @@ bool LexicalAnalysis::getNextSymbol()
 			line++;
 		}
 		getChar();
-		//ÎÄ¼þÄ©Î²È«ÊÇ¿Õ°×·û£¬·µ»Ø
+		//æ–‡ä»¶æœ«å°¾å…¨æ˜¯ç©ºç™½ç¬¦ï¼Œè¿”å›ž
 	}
 
-	//ÅÐ¶ÏÊÇ²»ÊÇ×ÖÄ¸
+	//åˆ¤æ–­æ˜¯ä¸æ˜¯å­—æ¯
 	if (isLetter(c)) 
 	{
-		//½«×Ö·ûÆ´½Ó³É×Ö·û´®
+		//å°†å­—ç¬¦æ‹¼æŽ¥æˆå­—ç¬¦ä¸²
 		while (isLetter(c) || isDigit(c)) 
 		{
 			token += c;
 			getChar();
-			//Èç¹û¶Áµ½Ä©Î²£¬Ìø³öÑ­»·
+			//å¦‚æžœè¯»åˆ°æœ«å°¾ï¼Œè·³å‡ºå¾ªçŽ¯
 			if (finish) 
 			{
 				break;
 			}
 		}
-		//Èç¹ûµ½Ä©Î²£¬²»»ØÍË
+		//å¦‚æžœåˆ°æœ«å°¾ï¼Œä¸å›žé€€
 		if (!finish) 
 		{
-			retract(); // »ØÍËÒ»¸ö×Ö·û
+			retract(); // å›žé€€ä¸€ä¸ªå­—ç¬¦
 		}
 		// cout << token << endl;
 		symbolCode = reserver();
 		//Word word(token, code);
 	}
 
-	//ÅÐ¶ÏÊý×Ö³£Á¿
+	//åˆ¤æ–­æ•°å­—å¸¸é‡
 	else if (isDigit(c)) 
 	{
 		while (isDigit(c)) 
@@ -199,7 +212,7 @@ bool LexicalAnalysis::getNextSymbol()
 		{
 			retract();
 		}
-		// int x = atoi(token.c_str());
+		value = atoi(token.c_str());
 		// cout << x << endl;
 		symbolCode = INTCON;
 	}
@@ -226,7 +239,7 @@ bool LexicalAnalysis::getNextSymbol()
 	}
 
 	// '/'
-	// TODO: ×¢ÊÍ£¿
+	// TODO: æ³¨é‡Šï¼Ÿ
 	else if (isDivi(c)) 
 	{
 		symbolCode = DIV;
@@ -256,7 +269,7 @@ bool LexicalAnalysis::getNextSymbol()
 
 	else if (isLt(c)) 
 	{
-		// TODO: ´íÎó´¦Àí£¿¶ÁÍêµ½Ä©Î² ºÃÏñ²»ÓÃ£¿
+		// TODO: é”™è¯¯å¤„ç†ï¼Ÿè¯»å®Œåˆ°æœ«å°¾ å¥½åƒä¸ç”¨ï¼Ÿ
 		getChar();
 		if (isEqu(c)) 
 		{
@@ -314,8 +327,8 @@ bool LexicalAnalysis::getNextSymbol()
 		}
 	}
 
-	// TODO: ÒýºÅ²»Æ¥Åä£¿£¿
-	// ¿Õ×Ö·û£¿
+	// TODO: å¼•å·ä¸åŒ¹é…ï¼Ÿï¼Ÿ
+	// ç©ºå­—ç¬¦ï¼Ÿ
 	else if (isSingleq(c)) 
 	{
 		getChar();
@@ -338,7 +351,7 @@ bool LexicalAnalysis::getNextSymbol()
 		symbolCode = STRCON;
 	}
 
-	// TODO: À¨ºÅÆ¥Åä
+	// TODO: æ‹¬å·åŒ¹é…
 	else if (isLpar(c)) 
 	{
 		symbolCode = LPARENT;
@@ -370,12 +383,7 @@ bool LexicalAnalysis::getNextSymbol()
 		token = "}";
 	}
 
-	if (!token.empty())
-	{
-		output.lexicalAnalysisOutput(symbolCode, token);
-	}
-
-	//Èç¹û¶Áµ½½áÎ²£¬·µ»Ø
+	//å¦‚æžœè¯»åˆ°ç»“å°¾ï¼Œè¿”å›ž
 	if (finish) 
 	{
 		return false;
@@ -384,4 +392,43 @@ bool LexicalAnalysis::getNextSymbol()
 	return true;
 }
 
+int LexicalAnalysis::getValue()
+{
+	return value;
+}
 
+bool LexicalAnalysis::isFinish()
+{
+	return finish;
+}
+
+void LexicalAnalysis::setAutoComplete()
+{
+	autoComplete = true;
+}
+
+int LexicalAnalysis::getIndex()
+{
+	return index;
+}
+
+void LexicalAnalysis::setIndex(int index)
+{
+	this->index = index;
+}
+
+void LexicalAnalysis::backup()
+{
+	backupIndex = index;
+	backupToken = token;
+	backupSymbolCode = symbolCode;
+}
+
+void LexicalAnalysis::restore()
+{
+	index = backupIndex;
+	backupIndex = -1;
+	token = backupToken;
+	backupToken = "";
+	symbolCode = backupSymbolCode;
+}

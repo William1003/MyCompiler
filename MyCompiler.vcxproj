@@ -142,6 +142,7 @@
   <ItemGroup>
     <ClInclude Include="src\charJudge.h" />
     <ClInclude Include="src\constValue.h" />
+    <ClInclude Include="src\ErrorHandler.h" />
     <ClInclude Include="src\globalMacro.h" />
     <ClInclude Include="src\LexicalAnalysis.h" />
     <ClInclude Include="src\Output.h" />
@@ -149,6 +150,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\constValue.cpp" />
+    <ClCompile Include="src\ErrorHandler.cpp" />
     <ClCompile Include="src\LexicalAnalysis.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Output.cpp" />
