@@ -42,6 +42,7 @@ public:
 	void setIndex(int index);
 	void backup();
 	void restore();
+	bool isCharacter();
 };
 
 #endif

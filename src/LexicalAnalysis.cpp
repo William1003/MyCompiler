@@ -432,3 +432,13 @@ void LexicalAnalysis::restore()
 	backupToken = "";
 	symbolCode = backupSymbolCode;
 }
+
+bool LexicalAnalysis::isCharacter()
+{
+	char c = token[0];
+	if (c == '+' || c == '-' || c == '*' || c == '/' || isLetter(c) || isDigit(c))
+	{
+		return true;
+	}
+	return false;
+}
