@@ -146,6 +146,8 @@
     <ClInclude Include="src\globalMacro.h" />
     <ClInclude Include="src\LexicalAnalysis.h" />
     <ClInclude Include="src\Output.h" />
+    <ClInclude Include="src\SymbolTable.h" />
+    <ClInclude Include="src\SymbolTableItem.h" />
     <ClInclude Include="src\SyntaxAnalysis.h" />
   </ItemGroup>
   <ItemGroup>
@@ -154,6 +156,8 @@
     <ClCompile Include="src\LexicalAnalysis.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Output.cpp" />
+    <ClCompile Include="src\SymbolTable.cpp" />
+    <ClCompile Include="src\SymbolTableItem.cpp" />
     <ClCompile Include="src\SyntaxAnalysis.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

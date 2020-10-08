@@ -3,6 +3,7 @@
 
 #include"LexicalAnalysis.h"
 #include"ErrorHandler.h"
+#include"SymbolTable.h"
 
 class SyntaxAnalysis
 {
@@ -16,9 +17,11 @@ private:
 	Output& output;
 	void backup(int line);
 	void retract(int line);
+	SymbolTable symbolTable;
+	string functionName;
 
 public:
-	SyntaxAnalysis(ErrorHandler& errorHandler, LexicalAnalysis& lexicalAnalysis, Output& output);
+	SyntaxAnalysis(ErrorHandler& errorHandler, LexicalAnalysis& lexicalAnalysis, Output& output, SymbolTable& table);
 	void doLexicalAnalysis();
 	void startSyntaxAnalysis();
 
@@ -41,8 +44,7 @@ public:
 	bool statement();			//语句
 	bool loopStatement();		//循环语句
 	bool ifStatement();			//条件语句
-	bool useFunction();	//有返回值函数调用
-	bool useFunctionWithoutRet();//无返回值函数调用
+	bool callFunction();	//有返回值函数调用 / 无返回值函数调用
 	bool assignStatement();		//赋值语句
 	bool scanfStatement();		//读语句
 	bool printfStatement();		//写语句

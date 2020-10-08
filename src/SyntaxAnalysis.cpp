@@ -3,8 +3,8 @@
 
 using namespace std;
 
-SyntaxAnalysis::SyntaxAnalysis(ErrorHandler& errorHandler, LexicalAnalysis& lexicalAnalysis, Output& output)
-	:errorHandler(errorHandler), lexicalAnalysis(lexicalAnalysis), output(output)
+SyntaxAnalysis::SyntaxAnalysis(ErrorHandler& errorHandler, LexicalAnalysis& lexicalAnalysis, Output& output, SymbolTable& table)
+	:errorHandler(errorHandler), lexicalAnalysis(lexicalAnalysis), output(output), symbolTable(table)
 {
 	symbolCode = IDENFR;
 }
@@ -972,6 +972,8 @@ bool SyntaxAnalysis::functionWithRet()
 		return false;
 	}
 
+	symbolTable.add(SymbolTableItem(functionName, 1));
+
 	if (symbolCode != LPARENT)
 	{
 		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
@@ -1016,6 +1018,7 @@ bool SyntaxAnalysis::functionWithRet()
 		return false;
 	}
 
+
 	getNext();
 	output.syntaxAnalysisOutput("有返回值函数定义");
 	return true;
@@ -1040,6 +1043,8 @@ bool SyntaxAnalysis::declareHeader()
 		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
+
+	functionName = lexicalAnalysis.getToken();
 
 	getNext();
 	output.syntaxAnalysisOutput("声明头部");
@@ -1145,6 +1150,9 @@ bool SyntaxAnalysis::functionWithoutRet()
 		return false;
 	}
 
+	functionName = lexicalAnalysis.getToken();
+	symbolTable.add(SymbolTableItem(functionName, 0));
+
 	getNext();
 	if (!hasNext || symbolCode != LPARENT)
 	{
@@ -1223,7 +1231,7 @@ bool SyntaxAnalysis::statement()
 			return true;
 		}
 		retract(1210);
-		if (useFunction())
+		if (callFunction())
 		{
 			if (!hasNext || symbolCode != SEMICN)
 			{
@@ -1655,7 +1663,7 @@ bool SyntaxAnalysis::factor()
 		else
 		{
 			retract(1638);
-			if (useFunction())
+			if (callFunction())
 			{
 				output.syntaxAnalysisOutput("因子", 1636);
 				return true;
@@ -1697,43 +1705,15 @@ bool SyntaxAnalysis::factor()
 // TODO: 填符号表区分
 
 /*＜有返回值函数调用语句＞ ::= ＜标识符＞'('＜值参数表＞')' */
-bool SyntaxAnalysis::useFunction()
-{
-	if (!hasNext || symbolCode != IDENFR)
-	{
-		return false;
-	}
-
-	getNext();
-	if (symbolCode != LPARENT)
-	{
-		return false;
-	}
-
-	getNext();
-	if (!parameterValueTable())
-	{
-		return false;
-	}
-
-	if (!hasNext || symbolCode != RPARENT)
-	{
-		return false;
-	}
-
-	getNext();
-	output.syntaxAnalysisOutput("有返回值函数调用语句");
-	return true;
-}
-
 /*＜无返回值函数调用语句＞ ::= ＜标识符＞'('＜值参数表＞')' */
-bool SyntaxAnalysis::useFunctionWithoutRet()
+bool SyntaxAnalysis::callFunction()
 {
 	if (!hasNext || symbolCode != IDENFR)
 	{
 		return false;
 	}
 
+	string name = lexicalAnalysis.getToken();
 	getNext();
 	if (symbolCode != LPARENT)
 	{
@@ -1752,7 +1732,14 @@ bool SyntaxAnalysis::useFunctionWithoutRet()
 	}
 
 	getNext();
-	output.syntaxAnalysisOutput("无返回值函数调用语句");
+	if (symbolTable.hasRet(name))
+	{
+		output.syntaxAnalysisOutput("有返回值函数调用语句");
+	}
+	else
+	{
+		output.syntaxAnalysisOutput("无返回值函数调用语句");
+	}
 	return true;
 }
 

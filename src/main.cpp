@@ -3,6 +3,7 @@
 #include"LexicalAnalysis.h"
 #include"SyntaxAnalysis.h"
 #include"iostream"
+#include"SymbolTable.h"
 
 using namespace std;
 
@@ -14,7 +15,8 @@ int main()
 	ErrorHandler errorHandler;
 	LexicalAnalysis lexicalAnalysis(myOutput);
 	lexicalAnalysis.readFile(ifname);
-	SyntaxAnalysis syntaxAnalysis(errorHandler, lexicalAnalysis, myOutput);
+	SymbolTable table;
+	SyntaxAnalysis syntaxAnalysis(errorHandler, lexicalAnalysis, myOutput, table);
 	syntaxAnalysis.startSyntaxAnalysis();
 	myOutput.outputToFile();
 	return 0;
