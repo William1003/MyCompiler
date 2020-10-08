@@ -12,12 +12,10 @@ private:
 	int value;
 	bool hasNext;
 	void getNext();
-	SymbolCode symbolCode;
-	SymbolCode symbolCodeBackup;
-	SymbolCode getSymbolCode();
+	enum SymbolCode symbolCode;
 	Output& output;
-	void backup();
-	void retract();
+	void backup(int line);
+	void retract(int line);
 
 public:
 	SyntaxAnalysis(ErrorHandler& errorHandler, LexicalAnalysis& lexicalAnalysis, Output& output);

@@ -6,10 +6,10 @@
 
 enum SymbolCode
 {
- IDENFR, 	// ±êÊ¶·û
- INTCON, 		// ÕûÐÎ³£Á¿
- CHARCON, 		// ×Ö·û³£Á¿
- STRCON,		// ×Ö·û´®
+ IDENFR, 	// æ ‡è¯†ç¬¦
+ INTCON, 		// æ•´å½¢å¸¸é‡
+ CHARCON, 		// å­—ç¬¦å¸¸é‡
+ STRCON,		// å­—ç¬¦ä¸²
  CONSTTK,		// const
  INTTK,			// int
  CHARTK,		// char

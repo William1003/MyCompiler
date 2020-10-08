@@ -15,23 +15,17 @@ void SyntaxAnalysis::getNext()
 	symbolCode = lexicalAnalysis.getSymbolCode();
 }
 
-void SyntaxAnalysis::backup()
+void SyntaxAnalysis::backup(int line)
 {
-	symbolCodeBackup = symbolCode;
 	lexicalAnalysis.backup();
-	output.backup();
+	output.backup(line);
 }
 
-void SyntaxAnalysis::retract()
+void SyntaxAnalysis::retract(int line)
 {
-	symbolCode = symbolCodeBackup;
 	lexicalAnalysis.restore();
-	output.retract();
-}
-
-SymbolCode SyntaxAnalysis::getSymbolCode()
-{
-	return lexicalAnalysis.getSymbolCode();
+	symbolCode = lexicalAnalysis.getSymbolCode();
+	output.retract(line);
 }
 
 void SyntaxAnalysis::doLexicalAnalysis()
@@ -46,6 +40,10 @@ void SyntaxAnalysis::startSyntaxAnalysis()
 	{
 		cout << "NOT A PROGRAM!" << endl;
 	}
+	else
+	{
+		cout << "CONGRATULATIONS!" << endl << "This is a program!" << endl;
+	}
 }
 
 /*＜程序＞ ::= ［＜常量说明＞］［＜变量说明＞］{ ＜有返回值函数定义＞ | ＜无返回值函数定义＞ }＜主函数＞*/
@@ -57,6 +55,42 @@ bool SyntaxAnalysis::program()
 	}
 	constDeclaration();
 	varDeclaration(true);
+
+	//无返回值函数与主函数的判断
+	while (true)
+	{
+		if (!hasNext)
+		{
+			break;
+		}
+
+		backup(73);
+
+		if (symbolCode == VOIDTK)
+		{
+			getNext();
+			if (hasNext && symbolCode == MAINTK)
+			{
+				retract(80);
+				break;
+			}
+			retract(83);
+			if (!functionWithoutRet())
+			{
+				return false;
+			}
+		}
+		if (!functionWithRet())
+		{
+			break;
+		}
+	}
+	if (!mainFunction())
+	{
+		return false;
+	}
+
+	output.syntaxAnalysisOutput("程序");
 	return true;
 }
 
@@ -99,12 +133,17 @@ bool SyntaxAnalysis::mainFunction()
 		return false;
 	}
 
-	if (!hasNext || symbolCode != RBRACE)
+	if (symbolCode != RBRACE)
 	{
 		return false;
 	}
 
 	getNext();
+	if (hasNext)
+	{
+		return false;
+	}
+
 	output.syntaxAnalysisOutput("主函数");
 	return true;
 }
@@ -120,26 +159,26 @@ bool SyntaxAnalysis::constDeclaration()
 	getNext();
 	if (!hasNext)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 
 	if (!constDefinition())
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 
 	// 未分析结束, 文件已结束
 	if (!hasNext)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 	// 缺失分号, 自动补全, 继续分析
 	if (symbolCode != SEMICN)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		lexicalAnalysis.setAutoComplete();
 	}
 
@@ -157,17 +196,17 @@ bool SyntaxAnalysis::constDeclaration()
 		getNext();
 		if (!constDefinition())
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 		if (!hasNext)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 		if (symbolCode != SEMICN)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			lexicalAnalysis.setAutoComplete();
 		}
 
@@ -191,14 +230,14 @@ bool SyntaxAnalysis::constDefinition()
 		getNext();
 		if (symbolCode != IDENFR)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 
 		getNext();
 		if (symbolCode != ASSIGN)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 
@@ -206,7 +245,7 @@ bool SyntaxAnalysis::constDefinition()
 
 		if (!integer())
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 
@@ -220,33 +259,33 @@ bool SyntaxAnalysis::constDefinition()
 			getNext();
 			if (!hasNext)
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 
 			if (symbolCode != IDENFR)
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 
 			getNext();
 			if (!hasNext)
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 
 			if (symbolCode != ASSIGN)
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 
 			getNext();
 			if (!integer())
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 		}
@@ -257,14 +296,14 @@ bool SyntaxAnalysis::constDefinition()
 		getNext();
 		if (symbolCode != IDENFR)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 
 		getNext();
 		if (symbolCode != ASSIGN)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 
@@ -272,13 +311,13 @@ bool SyntaxAnalysis::constDefinition()
 
 		if (!hasNext)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 
 		if (symbolCode != CHARCON)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 
@@ -294,32 +333,32 @@ bool SyntaxAnalysis::constDefinition()
 			getNext();
 			if (!hasNext)
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 
 			if (symbolCode != IDENFR)
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 
 			getNext();
 			if (!hasNext)
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 			if (symbolCode != ASSIGN)
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 
 			getNext();
 			if (symbolCode != CHARCON)
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 
@@ -338,7 +377,7 @@ bool SyntaxAnalysis::varDeclaration(bool isGlobal)
 		return false;
 	}
 
-	backup();
+	backup(386);
 
 	if (isGlobal)
 	{
@@ -350,12 +389,12 @@ bool SyntaxAnalysis::varDeclaration(bool isGlobal)
 				getNext();
 				if (hasNext && symbolCode == LPARENT)
 				{
-					retract();
+					retract(398);
 					return false;
 				}
 			}
 		}
-		retract();
+		retract(403);
 	}
 
 	if (!varDefinition())
@@ -365,7 +404,7 @@ bool SyntaxAnalysis::varDeclaration(bool isGlobal)
 
 	if (symbolCode != SEMICN)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		lexicalAnalysis.setAutoComplete();
 	}
 
@@ -373,7 +412,7 @@ bool SyntaxAnalysis::varDeclaration(bool isGlobal)
 
 	while (true)
 	{
-		backup();
+		backup(421);
 
 		if (isGlobal)
 		{
@@ -385,12 +424,12 @@ bool SyntaxAnalysis::varDeclaration(bool isGlobal)
 					getNext();
 					if (hasNext && symbolCode == LPARENT)
 					{
-						retract();
+						retract(433);
 						break;
 					}
 				}
 			}
-			retract();
+			retract(438);
 		}
 
 		if (!hasNext || !varDefinition())
@@ -400,7 +439,7 @@ bool SyntaxAnalysis::varDeclaration(bool isGlobal)
 
 		if (symbolCode != SEMICN)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			lexicalAnalysis.setAutoComplete();
 		}
 
@@ -414,10 +453,10 @@ bool SyntaxAnalysis::varDeclaration(bool isGlobal)
 /*＜变量定义＞ ::= ＜变量定义无初始化＞|＜变量定义及初始化＞ */
 bool SyntaxAnalysis::varDefinition()
 {
-	backup();
+	backup(462);
 	if (!varWithInit())
 	{
-		retract();
+		retract(465);
 		if (!varWithoutInit())
 		{
 			return false;
@@ -440,12 +479,12 @@ bool SyntaxAnalysis::varWithoutInit()
 	getNext();
 	if (!hasNext)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 	if (symbolCode != IDENFR)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 
@@ -459,24 +498,24 @@ bool SyntaxAnalysis::varWithoutInit()
 	getNext();
 	if (!hasNext)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 	if (symbolCode != INTCON)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 
 	getNext();
 	if (!hasNext)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 	if (symbolCode != RBRACK)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 
@@ -490,24 +529,24 @@ bool SyntaxAnalysis::varWithoutInit()
 	getNext();
 	if (!hasNext)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 	if (symbolCode != INTCON)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 	
 	getNext();
 	if (!hasNext)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 	if (symbolCode != RBRACK)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 	
@@ -522,12 +561,12 @@ bool SyntaxAnalysis::varWithoutInit()
 		getNext();
 		if (!hasNext)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 		if (symbolCode != IDENFR)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 
@@ -540,24 +579,24 @@ bool SyntaxAnalysis::varWithoutInit()
 		getNext();
 		if (!hasNext)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 		if (symbolCode != INTCON)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 
 		getNext();
 		if (!hasNext)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 		if (symbolCode != RBRACK)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 
@@ -570,24 +609,24 @@ bool SyntaxAnalysis::varWithoutInit()
 		getNext();
 		if (!hasNext)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 		if (symbolCode != INTCON)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 
 		getNext();
 		if (!hasNext)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 		if (symbolCode != RBRACK)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 
@@ -613,19 +652,19 @@ bool SyntaxAnalysis::varWithInit()
 	getNext();
 	if (!hasNext)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 	if (symbolCode != IDENFR)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 	
 	getNext();
 	if (!hasNext)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 
@@ -636,25 +675,25 @@ bool SyntaxAnalysis::varWithInit()
 		getNext();
 		if (!uinteger())
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 
 		if (!hasNext)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 		if (symbolCode != RBRACK)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 
 		getNext();
 		if (!hasNext)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 
@@ -665,60 +704,60 @@ bool SyntaxAnalysis::varWithInit()
 			getNext();
 			if (!uinteger())
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 			if (!hasNext)
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 			if (symbolCode != RBRACK)
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 
 			getNext();
 			if (!hasNext)
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 			if (symbolCode != ASSIGN)
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 
 			getNext();
 			if (!hasNext)
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 			if (symbolCode != LBRACE)
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 
 			getNext();
 			if (!hasNext)
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 			if (symbolCode != LBRACE)
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 
 			getNext();
 			if (!constant())
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 
@@ -733,19 +772,19 @@ bool SyntaxAnalysis::varWithInit()
 				getNext();
 				if (!constant())
 				{
-					errorHandler.syntaxError();
+					errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 					return false;
 				}
 			}
 
 			if (!hasNext)
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 			if (symbolCode != RBRACE)
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 
@@ -763,19 +802,19 @@ bool SyntaxAnalysis::varWithInit()
 				getNext();
 				if (!hasNext)
 				{
-					errorHandler.syntaxError();
+					errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 					return false;
 				}
 				if (symbolCode != LBRACE)
 				{
-					errorHandler.syntaxError();
+					errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 					return false;
 				}
 
 				getNext();
 				if (!constant())
 				{
-					errorHandler.syntaxError();
+					errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 					return false;
 				}
 
@@ -790,19 +829,19 @@ bool SyntaxAnalysis::varWithInit()
 					getNext();
 					if (!constant())
 					{
-						errorHandler.syntaxError();
+						errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 						return false;
 					}
 				}
 
 				if (!hasNext)
 				{
-					errorHandler.syntaxError();
+					errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 					return false;
 				}
 				if (symbolCode != RBRACE)
 				{
-					errorHandler.syntaxError();
+					errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 					return false;
 				}
 
@@ -811,12 +850,12 @@ bool SyntaxAnalysis::varWithInit()
 
 			if (!hasNext)
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 			if (symbolCode != RBRACE)
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 
@@ -828,26 +867,26 @@ bool SyntaxAnalysis::varWithInit()
 
 		if (symbolCode != ASSIGN)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 
 		getNext();
 		if (!hasNext)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 		if (symbolCode != LBRACE)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 
 		getNext();
 		if (!constant())
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 
@@ -862,19 +901,19 @@ bool SyntaxAnalysis::varWithInit()
 			getNext();
 			if (!constant())
 			{
-				errorHandler.syntaxError();
+				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
 		}
 
 		if (!hasNext)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 		if (symbolCode != RBRACE)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 		getNext();
@@ -884,12 +923,12 @@ bool SyntaxAnalysis::varWithInit()
 
 	if (!hasNext)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 	if (symbolCode != ASSIGN)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 
@@ -897,7 +936,7 @@ bool SyntaxAnalysis::varWithInit()
 
 	if (!constant())
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 	
@@ -920,45 +959,45 @@ bool SyntaxAnalysis::functionWithRet()
 
 	if (symbolCode != LPARENT)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 
 	getNext();
 	if (!parameterTable())
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 
 	if (!hasNext)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 	if (symbolCode != RPARENT)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 
 	getNext();
 	if (symbolCode != LBRACE)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 	getNext();
 
 	if (!compoundStatement())
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 
 	if (symbolCode != RBRACE)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 
@@ -983,7 +1022,7 @@ bool SyntaxAnalysis::declareHeader()
 	getNext();
 	if (symbolCode != IDENFR)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 
@@ -1016,12 +1055,12 @@ bool SyntaxAnalysis::parameterTable()
 	
 	if (!hasNext)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 	if (symbolCode != IDENFR)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 
@@ -1036,24 +1075,24 @@ bool SyntaxAnalysis::parameterTable()
 		getNext();
 		if (!hasNext)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 		if (symbolCode != INTTK && symbolCode != CONSTTK)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 
 		getNext();
 		if (!hasNext)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 		if (symbolCode != IDENFR)
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 
@@ -1069,6 +1108,12 @@ bool SyntaxAnalysis::compoundStatement()
 {
 	constDeclaration();
 	varDeclaration(false);
+	if (!statementQueue())
+	{
+		return false;
+	}
+	output.syntaxAnalysisOutput("复合语句");
+	return true;
 }
 
 /*＜无返回值函数定义＞  ::= void＜标识符＞'('＜参数表＞')''{'＜复合语句＞'}' */
@@ -1151,7 +1196,7 @@ bool SyntaxAnalysis::statement()
 	//先处理有冲突的函数调用与赋值语句
 	if (symbolCode == IDENFR)
 	{
-		backup();
+		backup(1205);
 		if (assignStatement())
 		{
 			if (!hasNext || symbolCode != SEMICN)
@@ -1162,7 +1207,7 @@ bool SyntaxAnalysis::statement()
 			output.syntaxAnalysisOutput("语句");
 			return true;
 		}
-		retract();
+		retract(1216);
 		if (useFunction())
 		{
 			if (!hasNext || symbolCode != SEMICN)
@@ -1204,6 +1249,11 @@ bool SyntaxAnalysis::statement()
 
 	if (returnStatement())
 	{
+		if (symbolCode != SEMICN)
+		{
+			return false;
+		}
+		getNext();
 		output.syntaxAnalysisOutput("语句");
 		return true;
 	}
@@ -1397,14 +1447,14 @@ bool SyntaxAnalysis::ifStatement()
 	getNext();
 	if (!hasNext || symbolCode != LPARENT)
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 
 	getNext();
 	if (!condition())
 	{
-		errorHandler.syntaxError();
+		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
 
@@ -1519,7 +1569,7 @@ bool SyntaxAnalysis::factor()
 		return false;
 	}
 
-	backup();
+	backup(1578);	
 
 	//特殊判断, 是不是函数?
 	if (symbolCode == IDENFR)
@@ -1527,7 +1577,7 @@ bool SyntaxAnalysis::factor()
 		getNext();
 		if (!hasNext)
 		{
-			output.syntaxAnalysisOutput("因子");
+			output.syntaxAnalysisOutput("因子", 1574);
 			return true;
 		}
 
@@ -1574,25 +1624,26 @@ bool SyntaxAnalysis::factor()
 						return false;
 					}
 					getNext();
-					output.syntaxAnalysisOutput("因子");
+					output.syntaxAnalysisOutput("因子", 1621);
 					return true;
 				}
-				output.syntaxAnalysisOutput("因子");
+				output.syntaxAnalysisOutput("因子", 1624);
 				return true;
 			}
-			output.syntaxAnalysisOutput("因子");
+			output.syntaxAnalysisOutput("因子", 1628);
 			return true;
 		}
 		else
 		{
-			retract();
-			if (useFunctionWithRet())
+			retract(1644);
+			if (useFunction())
 			{
-				output.syntaxAnalysisOutput("因子");
+				output.syntaxAnalysisOutput("因子", 1636);
 				return true;
 			}
 			return false;
 		}
+		
 	}
 	if (symbolCode == LPARENT)
 	{
@@ -1612,18 +1663,16 @@ bool SyntaxAnalysis::factor()
 		}
 		
 		getNext();
-		output.syntaxAnalysisOutput("因子");
+		output.syntaxAnalysisOutput("因子", 1660);
 		return true;
 	}
 	if (integer() || character())
 	{
-		output.syntaxAnalysisOutput("因子");
+		output.syntaxAnalysisOutput("因子", 1665);
 		return true;
 	}
 
-	// TODO:
-	output.syntaxAnalysisOutput("因子");
-	return true;
+	return false;
 }
 
 // TODO: 填符号表区分
@@ -1715,6 +1764,7 @@ bool SyntaxAnalysis::parameterValueTable()
 			break;
 		}
 
+		getNext();
 		if (!expression())
 		{
 			return false;
@@ -1862,21 +1912,29 @@ bool SyntaxAnalysis::printfStatement()
 			{
 				return false;
 			}
-			output.syntaxAnalysisOutput("写语句");
+			output.syntaxAnalysisOutput("写语句", 1909);
 			return true;
 		}
 		if (symbolCode != RPARENT)
 		{
 			return false;
 		}
-		output.syntaxAnalysisOutput("写语句");
+		getNext();
+		output.syntaxAnalysisOutput("写语句", 1917);
 		return true;
 	}
 	if (!expression())
 	{
 		return false;
 	}
-	output.syntaxAnalysisOutput("写语句");
+
+	if (symbolCode != RPARENT)
+	{
+		return false;
+	}
+
+	getNext();
+	output.syntaxAnalysisOutput("写语句", 1924);
 	return true;
 }
 
@@ -2049,7 +2107,7 @@ bool SyntaxAnalysis::integer()
 		getNext();
 		if (!uinteger())
 		{
-			errorHandler.syntaxError();
+			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
 		isMinus = (symbolCode == (PLUS))? false : true;

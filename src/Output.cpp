@@ -35,17 +35,33 @@ void Output::syntaxAnalysisOutput(string syntaxName)
 	debugFile << "<" << syntaxName << ">" << endl;
 }
 
+void Output::syntaxAnalysisOutput(string syntaxName, int line)
+{
+	outputContent += "<";
+	outputContent += syntaxName;
+	outputContent += ">";
+	outputContent += "\n";
+	debugFile << "<" << syntaxName << "> @line " << line << endl;
+}
+
+
 void Output::backup()
 {
 	backupString = outputContent;
 	debugFile << "backup!" << endl;
 }
 
-void Output::retract()
+void Output::backup(int line)
+{
+	backupString = outputContent;
+	debugFile << "backup!@line " << line << endl;
+}
+
+void Output::retract(int line)
 {
 	outputContent = backupString;
 	backupString = "";
-	debugFile << "retract!" << endl;
+	debugFile << "retract!@line" << line << endl;
 }
 
 void Output::outputToFile()

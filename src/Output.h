@@ -19,8 +19,11 @@ public:
 	Output(string& ofname);
 	void lexicalAnalysisOutput(SymbolCode symbolCode, string token);
 	void syntaxAnalysisOutput(string syntaxName);
+	void syntaxAnalysisOutput(string syntaxName, int line);
 	void backup();
-	void retract();
+	void backup(int line);
+
+	void retract(int line);
 	void outputToFile();
 };
 

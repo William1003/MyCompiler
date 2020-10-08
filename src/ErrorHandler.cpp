@@ -13,7 +13,7 @@ void ErrorHandler::lexicalError()
 	cout << "LEXICAL ERROR!" << endl;
 }
 
-void ErrorHandler::syntaxError()
+void ErrorHandler::syntaxError(int line, string functionName)
 {
-	cout << "SYNTAX ERROR!" << endl;
+	cout << "SYNTAX ERROR! @ line " << line << ", in " << functionName << endl;
 }

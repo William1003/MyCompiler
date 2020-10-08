@@ -2,6 +2,7 @@
 #include"Output.h"
 #include"LexicalAnalysis.h"
 #include"SyntaxAnalysis.h"
+#include"iostream"
 
 using namespace std;
 
