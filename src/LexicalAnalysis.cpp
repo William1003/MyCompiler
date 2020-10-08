@@ -16,6 +16,7 @@ LexicalAnalysis::LexicalAnalysis(Output& output):output(output)
 	value = 0;
 	token.clear();
 	fileContent.clear();
+	autoComplete = false;
 }
 
 void LexicalAnalysis::getChar() 
@@ -64,7 +65,7 @@ void LexicalAnalysis::readFile(string filename)
 
 SymbolCode LexicalAnalysis::getSymbolCode()
 {
-	return symbolCode;
+	return this->symbolCode;
 }
 
 string LexicalAnalysis::getToken()

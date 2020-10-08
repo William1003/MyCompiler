@@ -6,7 +6,7 @@ using namespace std;
 SyntaxAnalysis::SyntaxAnalysis(ErrorHandler& errorHandler, LexicalAnalysis& lexicalAnalysis, Output& output)
 	:errorHandler(errorHandler), lexicalAnalysis(lexicalAnalysis), output(output)
 {
-
+	symbolCode = IDENFR;
 }
 
 void SyntaxAnalysis::getNext()
@@ -64,7 +64,7 @@ bool SyntaxAnalysis::program()
 			break;
 		}
 
-		backup(73);
+		backup(67);
 
 		if (symbolCode == VOIDTK)
 		{
@@ -377,7 +377,7 @@ bool SyntaxAnalysis::varDeclaration(bool isGlobal)
 		return false;
 	}
 
-	backup(386);
+	backup(380);
 
 	if (isGlobal)
 	{
@@ -389,12 +389,12 @@ bool SyntaxAnalysis::varDeclaration(bool isGlobal)
 				getNext();
 				if (hasNext && symbolCode == LPARENT)
 				{
-					retract(398);
+					retract(392);
 					return false;
 				}
 			}
 		}
-		retract(403);
+		retract(397);
 	}
 
 	if (!varDefinition())
@@ -412,7 +412,7 @@ bool SyntaxAnalysis::varDeclaration(bool isGlobal)
 
 	while (true)
 	{
-		backup(421);
+		backup(415);
 
 		if (isGlobal)
 		{
@@ -424,12 +424,12 @@ bool SyntaxAnalysis::varDeclaration(bool isGlobal)
 					getNext();
 					if (hasNext && symbolCode == LPARENT)
 					{
-						retract(433);
+						retract(427);
 						break;
 					}
 				}
 			}
-			retract(438);
+			retract(432);
 		}
 
 		if (!hasNext || !varDefinition())
@@ -453,10 +453,10 @@ bool SyntaxAnalysis::varDeclaration(bool isGlobal)
 /*＜变量定义＞ ::= ＜变量定义无初始化＞|＜变量定义及初始化＞ */
 bool SyntaxAnalysis::varDefinition()
 {
-	backup(462);
+	backup(456);
 	if (!varWithInit())
 	{
-		retract(465);
+		retract(459);
 		if (!varWithoutInit())
 		{
 			return false;
@@ -1196,7 +1196,7 @@ bool SyntaxAnalysis::statement()
 	//先处理有冲突的函数调用与赋值语句
 	if (symbolCode == IDENFR)
 	{
-		backup(1205);
+		backup(1199);
 		if (assignStatement())
 		{
 			if (!hasNext || symbolCode != SEMICN)
@@ -1207,7 +1207,7 @@ bool SyntaxAnalysis::statement()
 			output.syntaxAnalysisOutput("语句");
 			return true;
 		}
-		retract(1216);
+		retract(1210);
 		if (useFunction())
 		{
 			if (!hasNext || symbolCode != SEMICN)
@@ -1569,7 +1569,7 @@ bool SyntaxAnalysis::factor()
 		return false;
 	}
 
-	backup(1578);	
+	backup(1572);	
 
 	//特殊判断, 是不是函数?
 	if (symbolCode == IDENFR)
@@ -1635,7 +1635,7 @@ bool SyntaxAnalysis::factor()
 		}
 		else
 		{
-			retract(1644);
+			retract(1638);
 			if (useFunction())
 			{
 				output.syntaxAnalysisOutput("因子", 1636);

@@ -17,14 +17,14 @@ private:
 	char c;					//当前读入的字符
 	string token;			//当前读入的symbol
 	string backupToken;
-	SymbolCode symbolCode;			//当前读入的symbol的标号
-	SymbolCode backupSymbolCode;
+	enum SymbolCode symbolCode;			//当前读入的symbol的标号
+	enum SymbolCode backupSymbolCode;
 	int line;				//记录当前行号 	
 	bool finish;			//是否读取结束
 	bool autoComplete;
 	int value;
 	Output& output;
-	SymbolCode reserver();			//查保留字
+	enum SymbolCode reserver();			//查保留字
 	void getChar();			//读下一个字符
 	void retract();			//回退一个字符
 
