@@ -3,16 +3,17 @@
 
 #include<vector>
 #include"SymbolTableItem.h"
+#include<map>
 
 class SymbolTable
 {
 private:
 	vector<SymbolTableItem> table;
-	int count;
+	int count = 0;
 
 public:
 	SymbolTable();
-	bool add(SymbolTableItem item);
+	bool push(SymbolTableItem item);
 	bool hasRet(string functionName);
 };
 

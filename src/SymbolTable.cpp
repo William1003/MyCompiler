@@ -6,7 +6,7 @@ SymbolTable::SymbolTable()
 	count = 0;
 }
 
-bool SymbolTable::add(SymbolTableItem item)
+bool SymbolTable::push(SymbolTableItem item)
 {
 	table.push_back(item);
 	count++;
@@ -17,7 +17,7 @@ bool SymbolTable::hasRet(string functionName)
 {
 	for (size_t i = 0; i < count; i++)
 	{
-		if (table[i].hasName(functionName))
+		if (table[i].nameEqual(functionName))
 		{
 			return table[i].hasRet();
 		}

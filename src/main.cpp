@@ -9,6 +9,7 @@ using namespace std;
 
 int main()
 {
+	cout << "欢迎光临" << endl;
 	string ifname = "testfile.txt";
 	string ofname = "output.txt";
 	Output myOutput(ofname);

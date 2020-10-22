@@ -2,11 +2,16 @@
 #define _ERROR_HANDLER_H_
 
 #include<string>
+#include<fstream>
 
 using namespace std;
 
 class ErrorHandler
 {
+private:
+	ofstream errorFile;
+	ofstream myErrorFile;
+
 public:
 	ErrorHandler();
 	void lexicalError();

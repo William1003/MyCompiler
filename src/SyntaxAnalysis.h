@@ -10,7 +10,6 @@ class SyntaxAnalysis
 private:
 	ErrorHandler& errorHandler;
 	LexicalAnalysis& lexicalAnalysis;
-	int value;
 	bool hasNext;
 	void getNext();
 	enum SymbolCode symbolCode;
@@ -19,6 +18,9 @@ private:
 	void retract(int line);
 	SymbolTable symbolTable;
 	string functionName;
+	int currentValue;
+	char currentChar;
+	string currentIdentifier;
 
 public:
 	SyntaxAnalysis(ErrorHandler& errorHandler, LexicalAnalysis& lexicalAnalysis, Output& output, SymbolTable& table);
@@ -26,8 +28,8 @@ public:
 	void startSyntaxAnalysis();
 
 	bool program();				//程序
-	bool constDeclaration();	//常量说明
-	bool constDefinition();		//常量定义
+	bool constDeclaration(string domain);	//常量说明
+	bool constDefinition(string domain);		//常量定义
 	bool varDeclaration(bool isGlobal);//变量说明
 	bool varDefinition();		//变量定义
 	bool varWithoutInit();		//变量定义无初始化
@@ -39,7 +41,7 @@ public:
 	bool constant();			//常量
 	bool declareHeader();		//声明头部
 	bool parameterTable();		//参数表
-	bool compoundStatement();	//复合语句
+	bool compoundStatement(string domain);	//复合语句
 	bool statementQueue();		//语句列
 	bool statement();			//语句
 	bool loopStatement();		//循环语句

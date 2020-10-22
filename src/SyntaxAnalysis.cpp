@@ -7,6 +7,8 @@ SyntaxAnalysis::SyntaxAnalysis(ErrorHandler& errorHandler, LexicalAnalysis& lexi
 	:errorHandler(errorHandler), lexicalAnalysis(lexicalAnalysis), output(output), symbolTable(table)
 {
 	symbolCode = IDENFR;
+	currentValue = 0;
+	currentIdentifier = "";
 }
 
 void SyntaxAnalysis::getNext()
@@ -53,7 +55,7 @@ bool SyntaxAnalysis::program()
 	{
 		return false;
 	}
-	constDeclaration();
+	constDeclaration("0");
 	varDeclaration(true);
 
 	//无返回值函数与主函数的判断
@@ -128,7 +130,7 @@ bool SyntaxAnalysis::mainFunction()
 
 	getNext();
 
-	if (!compoundStatement())
+	if (!compoundStatement("main"))
 	{
 		return false;
 	}
@@ -149,7 +151,7 @@ bool SyntaxAnalysis::mainFunction()
 }
 
 /* ＜常量说明＞ ::= const＜常量定义＞; { const＜常量定义＞; } */
-bool SyntaxAnalysis::constDeclaration()
+bool SyntaxAnalysis::constDeclaration(string domain)
 {
 	if (!hasNext || symbolCode != CONSTTK)
 	{
@@ -163,7 +165,7 @@ bool SyntaxAnalysis::constDeclaration()
 		return false;
 	}
 
-	if (!constDefinition())
+	if (!constDefinition(domain))
 	{
 		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
@@ -194,7 +196,7 @@ bool SyntaxAnalysis::constDeclaration()
 		}
 
 		getNext();
-		if (!constDefinition())
+		if (!constDefinition(domain))
 		{
 			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
@@ -218,7 +220,7 @@ bool SyntaxAnalysis::constDeclaration()
 
 /* ＜常量定义＞   ::=   int＜标识符＞＝＜整数＞{,＜标识符＞＝＜整数＞}  
    | char＜标识符＞＝＜字符＞{ ,＜标识符＞＝＜字符＞ } */
-bool SyntaxAnalysis::constDefinition()
+bool SyntaxAnalysis::constDefinition(string domain)
 {
 	if (!hasNext || (symbolCode != INTTK && symbolCode != CHARTK))
 	{
@@ -233,6 +235,8 @@ bool SyntaxAnalysis::constDefinition()
 			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
+		
+		currentIdentifier = lexicalAnalysis.getToken();
 
 		getNext();
 		if (symbolCode != ASSIGN)
@@ -248,6 +252,9 @@ bool SyntaxAnalysis::constDefinition()
 			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
+
+		//填符号表
+		symbolTable.push(Const(currentIdentifier, domain, currentValue));
 
 		while (true)
 		{
@@ -269,6 +276,8 @@ bool SyntaxAnalysis::constDefinition()
 				return false;
 			}
 
+			currentIdentifier = lexicalAnalysis.getToken();
+
 			getNext();
 			if (!hasNext)
 			{
@@ -288,6 +297,7 @@ bool SyntaxAnalysis::constDefinition()
 				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
+			symbolTable.push(Const(currentIdentifier, domain, currentValue));
 		}
 	}
 
@@ -299,6 +309,8 @@ bool SyntaxAnalysis::constDefinition()
 			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
+
+		currentIdentifier = lexicalAnalysis.getToken();
 
 		getNext();
 		if (symbolCode != ASSIGN)
@@ -320,6 +332,9 @@ bool SyntaxAnalysis::constDefinition()
 			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
+
+		currentChar = lexicalAnalysis.getToken().c_str()[0];
+		symbolTable.push(Const(currentIdentifier, domain, currentChar));
 
 		getNext();
 
@@ -361,6 +376,9 @@ bool SyntaxAnalysis::constDefinition()
 				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
+
+			currentChar = lexicalAnalysis.getToken().c_str()[0];
+			symbolTable.push(Const(currentIdentifier, domain, currentChar));
 
 			getNext();
 		}
@@ -972,8 +990,6 @@ bool SyntaxAnalysis::functionWithRet()
 		return false;
 	}
 
-	symbolTable.add(SymbolTableItem(functionName, 1));
-
 	if (symbolCode != LPARENT)
 	{
 		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
@@ -1006,7 +1022,7 @@ bool SyntaxAnalysis::functionWithRet()
 	}
 	getNext();
 
-	if (!compoundStatement())
+	if (!compoundStatement(functionName))
 	{
 		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
@@ -1036,6 +1052,7 @@ bool SyntaxAnalysis::declareHeader()
 	{
 		return false;
 	}
+	SymbolTableItemType type = (INTTK) ? INT : CHAR;
 
 	getNext();
 	if (symbolCode != IDENFR)
@@ -1045,6 +1062,8 @@ bool SyntaxAnalysis::declareHeader()
 	}
 
 	functionName = lexicalAnalysis.getToken();
+
+	symbolTable.push(Function(functionName, type));
 
 	getNext();
 	output.syntaxAnalysisOutput("声明头部");
@@ -1124,9 +1143,9 @@ bool SyntaxAnalysis::parameterTable()
 }
 
 /*＜复合语句＞ ::= ［＜常量说明＞］［＜变量说明＞］＜语句列＞*/
-bool SyntaxAnalysis::compoundStatement()
+bool SyntaxAnalysis::compoundStatement(string domain)
 {
-	constDeclaration();
+	constDeclaration(domain);
 	varDeclaration(false);
 	if (!statementQueue())
 	{
@@ -1151,7 +1170,7 @@ bool SyntaxAnalysis::functionWithoutRet()
 	}
 
 	functionName = lexicalAnalysis.getToken();
-	symbolTable.add(SymbolTableItem(functionName, 0));
+	symbolTable.push(Function(functionName, VOID));
 
 	getNext();
 	if (!hasNext || symbolCode != LPARENT)
@@ -1177,7 +1196,7 @@ bool SyntaxAnalysis::functionWithoutRet()
 	}
 
 	getNext();
-	if (!compoundStatement())
+	if (!compoundStatement(functionName))
 	{
 		return false;
 	}
@@ -2106,7 +2125,7 @@ bool SyntaxAnalysis::returnStatement()
 /*＜整数＞ ::= ［＋｜－］＜无符号整数＞ */
 bool SyntaxAnalysis::integer()
 {
-	bool isMinus;
+	bool isMinus = false;
 
 	if (!hasNext || (symbolCode != PLUS && symbolCode != MINU && symbolCode != INTCON))
 	{
@@ -2121,7 +2140,8 @@ bool SyntaxAnalysis::integer()
 			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
-		isMinus = (symbolCode == (PLUS))? false : true;
+		isMinus = (symbolCode == (PLUS)) ? false : true;
+		
 	}
 
 	else if (!uinteger())
@@ -2129,6 +2149,7 @@ bool SyntaxAnalysis::integer()
 		return false;
 	}
 
+	currentValue = (isMinus) ? -lexicalAnalysis.getValue() : lexicalAnalysis.getValue();
 	output.syntaxAnalysisOutput("整数");
 	return true;
 }

@@ -1,12 +1,7 @@
-#include "SymbolTableItem.h"
+#include"SymbolTableItem.h"
+#include"constValue.h"
 
-SymbolTableItem::SymbolTableItem(string name, int functionType)
-{
-	this->name = name;
-	this->functionType = functionType;
-}
-
-bool SymbolTableItem::hasName(string name)
+bool SymbolTableItem::nameEqual(string name)
 {
 	if (this->name == name)
 	{
@@ -17,5 +12,9 @@ bool SymbolTableItem::hasName(string name)
 
 bool SymbolTableItem::hasRet()
 {
-	return functionType > 0;
+	if (this->kind == FUNCTION)
+	{
+		return this->type > 0;
+	}
+	return false;
 }

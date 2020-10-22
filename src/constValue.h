@@ -47,4 +47,20 @@ enum SymbolCode
  RBRACE		// }
 };
 
+enum SymbolTableItemType
+{
+	VOID,
+	INT,
+	CHAR
+};
+
+enum SymbolTableItemKind
+{
+	CONST,
+	VAR,
+	ARRAY,
+	FUNCTION,
+	PARAMETER
+};
+
 #endif // !_CONST_VALUE_H_

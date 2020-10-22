@@ -5,7 +5,13 @@ using namespace std;
 
 ErrorHandler::ErrorHandler()
 {
-
+	errorFile.open("error.txt");
+	if (!errorFile)
+	{
+		cout << "Open ErrorFile Failed!" << endl;
+		exit(EXIT_SUCCESS);
+	}
+	myErrorFile.open("myError.txt");
 }
 
 void ErrorHandler::lexicalError()
