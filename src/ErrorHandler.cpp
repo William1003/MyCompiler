@@ -3,6 +3,8 @@
 
 using namespace std;
 
+extern const char* ErrorContent[ERROR_NUM];
+
 ErrorHandler::ErrorHandler()
 {
 	errorFile.open("error.txt");
@@ -14,12 +16,19 @@ ErrorHandler::ErrorHandler()
 	myErrorFile.open("myError.txt");
 }
 
-void ErrorHandler::lexicalError()
+void ErrorHandler::lexicalError(int line)
 {
 	cout << "LEXICAL ERROR!" << endl;
+	cout << line << " a" << endl;
+	errorFile << line << " a" << endl;
 }
 
 void ErrorHandler::syntaxError(int line, string functionName)
 {
 	cout << "SYNTAX ERROR! @ line " << line << ", in " << functionName << endl;
+}
+
+void ErrorHandler::error(int line, ErrorCode errorCode)
+{
+	errorFile << line << " " << ErrorContent[errorCode] << endl;
 }

@@ -8,3 +8,33 @@ const char* SymbolName[SYMBOL_NUM]
 	"GRE", "GEQ", "EQL", "NEQ", "COLON", "ASSIGN", "SEMICN", "COMMA", "LPARENT",
 	"RPARENT", "LBRACK", "RBRACK", "LBRACE", "RBRACE"
 };
+
+const char* ErrorContent[ERROR_NUM]
+{
+	"a",
+	"b",
+	"c",
+	"d",
+	"e",
+	"f",
+	"g",
+	"h",
+	"i",
+	"j",
+	"k",
+	"l",
+	"m",
+	"n",
+	"o",
+	"p"
+};
+
+const char* ItemType[TYPE_NUM]
+{
+	"VOID", "INT", "CHAR"
+};
+
+const char* ItemKind[KIND_NUM]
+{
+	"CONST", "VAR", "ARRAY", "FUNCTION", "PARAMETER"
+};

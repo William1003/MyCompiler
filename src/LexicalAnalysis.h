@@ -4,6 +4,7 @@
 #include<string>
 #include"constValue.h"
 #include"Output.h"
+#include"ErrorHandler.h"
 
 using namespace std;
 
@@ -27,9 +28,10 @@ private:
 	enum SymbolCode reserver();			//查保留字
 	void getChar();			//读下一个字符
 	void retract();			//回退一个字符
+	ErrorHandler& errorHandler;
 
 public:
-	LexicalAnalysis(Output& output);
+	LexicalAnalysis(Output& output, ErrorHandler& errorHandler);
 	void readFile(string filename);
 	SymbolCode getSymbolCode();
 	string getToken();

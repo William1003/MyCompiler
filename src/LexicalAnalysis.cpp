@@ -6,7 +6,8 @@
 #include<algorithm>
 #include"charJudge.h"
 
-LexicalAnalysis::LexicalAnalysis(Output& output):output(output)
+LexicalAnalysis::LexicalAnalysis(Output& output, ErrorHandler& errorHandler) :
+	output(output), errorHandler(errorHandler)
 {
 	fileLength = 0;		
 	index = 0;				
@@ -336,6 +337,10 @@ bool LexicalAnalysis::getNextSymbol()
 		while (!isSingleq(c)) 
 		{
 			token += c;
+			if (!(isPlus(c) || isMinus(c) || isStar(c) || isDivi(c) || isLetter(c) || isDigit(c)))
+			{
+				errorHandler.error(line, A);
+			}
 			getChar();
 		}
 		symbolCode = CHARCON;
@@ -347,7 +352,15 @@ bool LexicalAnalysis::getNextSymbol()
 		while (!isDoubleq(c)) 
 		{
 			token += c;
+			if (!(c == 32 || c == 33 || (c >= 35 && c <= 126)))
+			{
+				errorHandler.error(line, A);
+			}
 			getChar();
+		}
+		if (token == "")
+		{
+			errorHandler.error(line, A);
 		}
 		symbolCode = STRCON;
 	}

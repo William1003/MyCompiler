@@ -9,6 +9,7 @@ SyntaxAnalysis::SyntaxAnalysis(ErrorHandler& errorHandler, LexicalAnalysis& lexi
 	symbolCode = IDENFR;
 	currentValue = 0;
 	currentIdentifier = "";
+	currentDomain = "0";
 }
 
 void SyntaxAnalysis::getNext()
@@ -55,12 +56,13 @@ bool SyntaxAnalysis::program()
 	{
 		return false;
 	}
-	constDeclaration("0");
-	varDeclaration(true);
+	constDeclaration();
+	varDeclaration();
 
 	//无返回值函数与主函数的判断
 	while (true)
 	{
+		currentDomain = "0";
 		if (!hasNext)
 		{
 			break;
@@ -81,6 +83,7 @@ bool SyntaxAnalysis::program()
 			{
 				return false;
 			}
+			
 		}
 		else if (!functionWithRet())
 		{
@@ -110,6 +113,9 @@ bool SyntaxAnalysis::mainFunction()
 		return false;
 	}
 
+	currentDomain = "main";
+	currentIdentifier = "main";
+
 	getNext();
 	if (!hasNext || symbolCode != LPARENT)
 	{
@@ -119,7 +125,8 @@ bool SyntaxAnalysis::mainFunction()
 	getNext();
 	if (!hasNext || symbolCode != RPARENT)
 	{
-		return false;
+		errorHandler.error(lexicalAnalysis.getLineCount(), L);
+		lexicalAnalysis.setAutoComplete();
 	}
 
 	getNext();
@@ -130,7 +137,7 @@ bool SyntaxAnalysis::mainFunction()
 
 	getNext();
 
-	if (!compoundStatement("main"))
+	if (!compoundStatement())
 	{
 		return false;
 	}
@@ -151,7 +158,7 @@ bool SyntaxAnalysis::mainFunction()
 }
 
 /* ＜常量说明＞ ::= const＜常量定义＞; { const＜常量定义＞; } */
-bool SyntaxAnalysis::constDeclaration(string domain)
+bool SyntaxAnalysis::constDeclaration()
 {
 	if (!hasNext || symbolCode != CONSTTK)
 	{
@@ -165,7 +172,7 @@ bool SyntaxAnalysis::constDeclaration(string domain)
 		return false;
 	}
 
-	if (!constDefinition(domain))
+	if (!constDefinition())
 	{
 		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
@@ -180,7 +187,7 @@ bool SyntaxAnalysis::constDeclaration(string domain)
 	// 缺失分号, 自动补全, 继续分析
 	if (symbolCode != SEMICN)
 	{
-		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
+		errorHandler.error(lexicalAnalysis.getLineCount(), K);
 		lexicalAnalysis.setAutoComplete();
 	}
 
@@ -196,7 +203,7 @@ bool SyntaxAnalysis::constDeclaration(string domain)
 		}
 
 		getNext();
-		if (!constDefinition(domain))
+		if (!constDefinition())
 		{
 			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
@@ -208,7 +215,7 @@ bool SyntaxAnalysis::constDeclaration(string domain)
 		}
 		if (symbolCode != SEMICN)
 		{
-			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
+			errorHandler.error(lexicalAnalysis.getLineCount(), K);
 			lexicalAnalysis.setAutoComplete();
 		}
 
@@ -220,7 +227,7 @@ bool SyntaxAnalysis::constDeclaration(string domain)
 
 /* ＜常量定义＞   ::=   int＜标识符＞＝＜整数＞{,＜标识符＞＝＜整数＞}  
    | char＜标识符＞＝＜字符＞{ ,＜标识符＞＝＜字符＞ } */
-bool SyntaxAnalysis::constDefinition(string domain)
+bool SyntaxAnalysis::constDefinition()
 {
 	if (!hasNext || (symbolCode != INTTK && symbolCode != CHARTK))
 	{
@@ -254,7 +261,10 @@ bool SyntaxAnalysis::constDefinition(string domain)
 		}
 
 		//填符号表
-		symbolTable.push(Const(currentIdentifier, domain, currentValue));
+		if (!symbolTable.push(Const(currentIdentifier, currentDomain, currentValue)))
+		{
+			errorHandler.error(lexicalAnalysis.getLineCount(), B);
+		}
 
 		while (true)
 		{
@@ -297,7 +307,11 @@ bool SyntaxAnalysis::constDefinition(string domain)
 				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
-			symbolTable.push(Const(currentIdentifier, domain, currentValue));
+			
+			if (!symbolTable.push(Const(currentIdentifier, currentDomain, currentValue)))
+			{
+				errorHandler.error(lexicalAnalysis.getLineCount(), B);
+			}
 		}
 	}
 
@@ -334,7 +348,10 @@ bool SyntaxAnalysis::constDefinition(string domain)
 		}
 
 		currentChar = lexicalAnalysis.getToken().c_str()[0];
-		symbolTable.push(Const(currentIdentifier, domain, currentChar));
+		if (!symbolTable.push(Const(currentIdentifier, currentDomain, currentChar)))
+		{
+			errorHandler.error(lexicalAnalysis.getLineCount(), B);
+		}
 
 		getNext();
 
@@ -378,7 +395,10 @@ bool SyntaxAnalysis::constDefinition(string domain)
 			}
 
 			currentChar = lexicalAnalysis.getToken().c_str()[0];
-			symbolTable.push(Const(currentIdentifier, domain, currentChar));
+			if (!symbolTable.push(Const(currentIdentifier, currentDomain, currentChar)))
+			{
+				errorHandler.error(lexicalAnalysis.getLineCount(), B);
+			}
 
 			getNext();
 		}
@@ -388,7 +408,7 @@ bool SyntaxAnalysis::constDefinition(string domain)
 }
 
 /*＜变量说明＞ ::= ＜变量定义＞;{＜变量定义＞;} */
-bool SyntaxAnalysis::varDeclaration(bool isGlobal)
+bool SyntaxAnalysis::varDeclaration()
 {
 	if (!hasNext)
 	{
@@ -397,7 +417,7 @@ bool SyntaxAnalysis::varDeclaration(bool isGlobal)
 
 	backup(380);
 
-	if (isGlobal)
+	if (currentDomain == "0")
 	{
 		if (symbolCode == CHARTK || symbolCode == INTTK)
 		{
@@ -422,7 +442,7 @@ bool SyntaxAnalysis::varDeclaration(bool isGlobal)
 
 	if (symbolCode != SEMICN)
 	{
-		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
+		errorHandler.error(lexicalAnalysis.getLineCount(), K);
 		lexicalAnalysis.setAutoComplete();
 	}
 
@@ -432,7 +452,7 @@ bool SyntaxAnalysis::varDeclaration(bool isGlobal)
 	{
 		backup(415);
 
-		if (isGlobal)
+		if (currentDomain == "0")
 		{
 			if (symbolCode == CHARTK || symbolCode == INTTK)
 			{
@@ -457,7 +477,7 @@ bool SyntaxAnalysis::varDeclaration(bool isGlobal)
 
 		if (symbolCode != SEMICN)
 		{
-			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
+			errorHandler.error(lexicalAnalysis.getLineCount(), K);
 			lexicalAnalysis.setAutoComplete();
 		}
 
@@ -494,6 +514,10 @@ bool SyntaxAnalysis::varWithoutInit()
 		return false;
 	}
 	
+	SymbolTableItemType tempType = (symbolCode == INTTK) ? INT : CHAR;
+	int row;
+	int column = 1;
+
 	getNext();
 	if (!hasNext)
 	{
@@ -506,12 +530,18 @@ bool SyntaxAnalysis::varWithoutInit()
 		return false;
 	}
 
+	currentIdentifier = lexicalAnalysis.getToken();
+
 	getNext();
 
 	if (symbolCode != COMMA)
 	{
 		if (!hasNext || symbolCode != LBRACK)
 		{
+			if (!symbolTable.push(Var(currentIdentifier, currentDomain, tempType)))
+			{
+				errorHandler.error(lexicalAnalysis.getLineCount(), B);
+			}
 			output.syntaxAnalysisOutput("变量定义无初始化");
 			return true;
 		}
@@ -528,6 +558,8 @@ bool SyntaxAnalysis::varWithoutInit()
 			return false;
 		}
 
+		row = currentValue;
+
 		if (!hasNext)
 		{
 			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
@@ -535,8 +567,8 @@ bool SyntaxAnalysis::varWithoutInit()
 		}
 		if (symbolCode != RBRACK)
 		{
-			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
-			return false;
+			errorHandler.error(lexicalAnalysis.getLineCount(), M);
+			lexicalAnalysis.setAutoComplete();
 		}
 
 		getNext();
@@ -544,6 +576,10 @@ bool SyntaxAnalysis::varWithoutInit()
 		{
 			if (!hasNext || symbolCode != LBRACK)
 			{
+				if (!symbolTable.push(Array(currentIdentifier, currentDomain, row, tempType)))
+				{
+					errorHandler.error(lexicalAnalysis.getLineCount(), B);
+				}
 				output.syntaxAnalysisOutput("变量定义无初始化");
 				return true;
 			}
@@ -560,6 +596,8 @@ bool SyntaxAnalysis::varWithoutInit()
 				return false;
 			}
 
+			column = currentValue;
+
 			if (!hasNext)
 			{
 				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
@@ -567,9 +605,15 @@ bool SyntaxAnalysis::varWithoutInit()
 			}
 			if (symbolCode != RBRACK)
 			{
-				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
-				return false;
+				errorHandler.error(lexicalAnalysis.getLineCount(), M);
+				lexicalAnalysis.setAutoComplete();
 			}
+
+			if (!symbolTable.push(Array(currentIdentifier, currentDomain, row, column, tempType)))
+			{
+				errorHandler.error(lexicalAnalysis.getLineCount(), B);
+			}
+			
 			getNext();
 		}
 	}
@@ -593,16 +637,26 @@ bool SyntaxAnalysis::varWithoutInit()
 			return false;
 		}
 
+		currentIdentifier = lexicalAnalysis.getToken();
+
 		getNext();
 
 		//特殊判断 ","
 		if (hasNext && symbolCode == COMMA)
 		{
+			if (!symbolTable.push(Var(currentIdentifier, currentDomain, tempType)))
+			{
+				errorHandler.error(lexicalAnalysis.getLineCount(), B);
+			}
 			continue;
 		}
 
 		if (!hasNext || symbolCode != LBRACK)
 		{
+			if (!symbolTable.push(Var(currentIdentifier, currentDomain, tempType)))
+			{
+				errorHandler.error(lexicalAnalysis.getLineCount(), B);
+			}
 			break;
 		}
 
@@ -618,6 +672,8 @@ bool SyntaxAnalysis::varWithoutInit()
 			return false;
 		}
 
+		row = currentValue;
+
 		if (!hasNext)
 		{
 			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
@@ -625,18 +681,26 @@ bool SyntaxAnalysis::varWithoutInit()
 		}
 		if (symbolCode != RBRACK)
 		{
-			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
-			return false;
+			errorHandler.error(lexicalAnalysis.getLineCount(), M);
+			lexicalAnalysis.setAutoComplete();
 		}
 
 		getNext();
 		if (hasNext && symbolCode == COMMA)
 		{
+			if (!symbolTable.push(Array(currentIdentifier, currentDomain, row, tempType)))
+			{
+				errorHandler.error(lexicalAnalysis.getLineCount(), B);
+			}
 			continue;
 		}
 
 		if (!hasNext || symbolCode != LBRACK)
 		{
+			if (!symbolTable.push(Array(currentIdentifier, currentDomain, row, tempType)))
+			{
+				errorHandler.error(lexicalAnalysis.getLineCount(), B);
+			}
 			break;
 		}
 
@@ -652,6 +716,8 @@ bool SyntaxAnalysis::varWithoutInit()
 			return false;
 		}
 
+		column = currentValue;
+
 		if (!hasNext)
 		{
 			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
@@ -659,10 +725,14 @@ bool SyntaxAnalysis::varWithoutInit()
 		}
 		if (symbolCode != RBRACK)
 		{
-			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
-			return false;
+			errorHandler.error(lexicalAnalysis.getLineCount(), M);
+			lexicalAnalysis.setAutoComplete();
 		}
 
+		if (!symbolTable.push(Array(currentIdentifier, currentDomain, row, column, tempType)))
+		{
+			errorHandler.error(lexicalAnalysis.getLineCount(), B);
+		}
 		getNext();
 	}
 	output.syntaxAnalysisOutput("变量定义无初始化");
@@ -676,11 +746,14 @@ bool SyntaxAnalysis::varWithoutInit()
 bool SyntaxAnalysis::varWithInit()
 {
 	int dimension = 0;
+	int row, column;
 
 	if (!hasNext || (symbolCode != INTTK && symbolCode != CHARTK))
 	{
 		return false;
 	}
+
+	SymbolTableItemType tempType = (symbolCode == INTTK) ? INT : CHAR;
 
 	getNext();
 	if (!hasNext)
@@ -694,6 +767,8 @@ bool SyntaxAnalysis::varWithInit()
 		return false;
 	}
 	
+	currentIdentifier = lexicalAnalysis.getToken();
+
 	getNext();
 	if (!hasNext)
 	{
@@ -711,6 +786,7 @@ bool SyntaxAnalysis::varWithInit()
 			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
+		row = currentValue;
 
 		if (!hasNext)
 		{
@@ -719,8 +795,8 @@ bool SyntaxAnalysis::varWithInit()
 		}
 		if (symbolCode != RBRACK)
 		{
-			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
-			return false;
+			errorHandler.error(lexicalAnalysis.getLineCount(), M);
+			lexicalAnalysis.setAutoComplete();
 		}
 
 		getNext();
@@ -740,6 +816,8 @@ bool SyntaxAnalysis::varWithInit()
 				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
+			column = currentValue;
+
 			if (!hasNext)
 			{
 				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
@@ -747,9 +825,11 @@ bool SyntaxAnalysis::varWithInit()
 			}
 			if (symbolCode != RBRACK)
 			{
-				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
-				return false;
+				errorHandler.error(lexicalAnalysis.getLineCount(), M);
+				lexicalAnalysis.setAutoComplete();
 			}
+
+			Array array = Array(currentIdentifier, currentDomain, row, column, tempType);
 
 			getNext();
 			if (!hasNext)
@@ -808,6 +888,12 @@ bool SyntaxAnalysis::varWithInit()
 					errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 					return false;
 				}
+
+				// TODO: 
+				if (!array.addValue(currentConstant))
+				{
+					errorHandler.error(lexicalAnalysis.getLineCount(), N);
+				}
 			}
 
 			if (!hasNext)
@@ -823,6 +909,7 @@ bool SyntaxAnalysis::varWithInit()
 
 			//二维数组, 后面的常量赋值
 			
+
 			getNext();
 
 			while (true)
@@ -832,6 +919,7 @@ bool SyntaxAnalysis::varWithInit()
 					break;
 				}
 
+				array.nextRow();
 				getNext();
 				if (!hasNext)
 				{
@@ -851,6 +939,12 @@ bool SyntaxAnalysis::varWithInit()
 					return false;
 				}
 
+				// TODO:
+				if (!array.addValue(currentConstant))
+				{
+					errorHandler.error(lexicalAnalysis.getLineCount(), N);
+				}
+
 				//二维数组: 常量赋值
 				while (true)
 				{
@@ -864,6 +958,12 @@ bool SyntaxAnalysis::varWithInit()
 					{
 						errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 						return false;
+					}
+
+					// TODO:
+					if (!array.addValue(currentConstant))
+					{
+						errorHandler.error(lexicalAnalysis.getLineCount(), N);
 					}
 				}
 
@@ -892,11 +992,18 @@ bool SyntaxAnalysis::varWithInit()
 				return false;
 			}
 
+			if (!array.isFullyAssign())
+			{
+				errorHandler.error(lexicalAnalysis.getLineCount(), N);
+			}
+			symbolTable.push(array);
+			
 			getNext();
-
 			output.syntaxAnalysisOutput("变量定义及初始化");
 			return true;
 		}
+
+		Array array = Array(currentIdentifier, currentDomain, row, tempType);
 
 		if (symbolCode != ASSIGN)
 		{
@@ -923,6 +1030,12 @@ bool SyntaxAnalysis::varWithInit()
 			return false;
 		}
 
+		// TODO:
+		if (!array.addValue(currentConstant))
+		{
+			errorHandler.error(lexicalAnalysis.getLineCount(), N);
+		}
+
 		//一维数组: 第一维常量
 		while (true)
 		{
@@ -937,6 +1050,12 @@ bool SyntaxAnalysis::varWithInit()
 				errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 				return false;
 			}
+
+			// TODO:
+			if (!array.addValue(currentConstant))
+			{
+				errorHandler.error(lexicalAnalysis.getLineCount(), N);
+			}
 		}
 
 		if (!hasNext)
@@ -944,11 +1063,17 @@ bool SyntaxAnalysis::varWithInit()
 			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
-		if (symbolCode != RBRACE)
+		if (symbolCode != RBRACE) 
 		{
 			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
+
+		if (!array.isFullyAssign())
+		{
+			errorHandler.error(lexicalAnalysis.getLineCount(), N);
+		}
+		symbolTable.push(array);
 		getNext();
 		output.syntaxAnalysisOutput("变量定义及初始化");
 		return true;
@@ -973,6 +1098,7 @@ bool SyntaxAnalysis::varWithInit()
 		return false;
 	}
 	
+	symbolTable.push(Var(currentIdentifier, currentDomain, currentConstant, tempType));
 	output.syntaxAnalysisOutput("变量定义及初始化");
 	return true;
 }
@@ -985,10 +1111,23 @@ bool SyntaxAnalysis::functionWithRet()
 		return false;
 	}
 
+	SymbolTableItemType temp;
+	if (symbolCode == INTTK)
+	{
+		temp = INT;
+	}
+
+	if (symbolCode == CHARTK)
+	{
+		temp = CHAR;
+	}
+
 	if (!declareHeader())
 	{
 		return false;
 	}
+	
+	currentDomain = currentIdentifier;
 
 	if (symbolCode != LPARENT)
 	{
@@ -1010,8 +1149,8 @@ bool SyntaxAnalysis::functionWithRet()
 	}
 	if (symbolCode != RPARENT)
 	{
-		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
-		return false;
+		errorHandler.error(lexicalAnalysis.getLineCount(), L);
+		lexicalAnalysis.setAutoComplete();
 	}
 
 	getNext();
@@ -1022,7 +1161,7 @@ bool SyntaxAnalysis::functionWithRet()
 	}
 	getNext();
 
-	if (!compoundStatement(functionName))
+	if (!compoundStatement())
 	{
 		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
@@ -1034,8 +1173,9 @@ bool SyntaxAnalysis::functionWithRet()
 		return false;
 	}
 
-
 	getNext();
+	
+	symbolTable.push(Function(currentDomain, temp, parameterNumber));
 	output.syntaxAnalysisOutput("有返回值函数定义");
 	return true;
 }
@@ -1052,7 +1192,6 @@ bool SyntaxAnalysis::declareHeader()
 	{
 		return false;
 	}
-	SymbolTableItemType type = (INTTK) ? INT : CHAR;
 
 	getNext();
 	if (symbolCode != IDENFR)
@@ -1061,9 +1200,7 @@ bool SyntaxAnalysis::declareHeader()
 		return false;
 	}
 
-	functionName = lexicalAnalysis.getToken();
-
-	symbolTable.push(Function(functionName, type));
+	currentIdentifier = lexicalAnalysis.getToken();
 
 	getNext();
 	output.syntaxAnalysisOutput("声明头部");
@@ -1078,6 +1215,8 @@ bool SyntaxAnalysis::parameterTable()
 		return false;
 	}
 
+	parameterNumber = 0;
+
 	//空
 	if (symbolCode == RPARENT)
 	{
@@ -1089,6 +1228,8 @@ bool SyntaxAnalysis::parameterTable()
 	{
 		return false;
 	}
+
+	SymbolTableItemType tempType = (symbolCode == INTTK) ? INT : CHAR;
 
 	getNext();
 	
@@ -1102,6 +1243,11 @@ bool SyntaxAnalysis::parameterTable()
 		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
+
+	currentIdentifier = lexicalAnalysis.getToken();
+
+	symbolTable.push(Parameter(currentIdentifier, currentDomain, tempType));
+	parameterNumber++;
 
 	getNext();
 	while (true)
@@ -1123,6 +1269,7 @@ bool SyntaxAnalysis::parameterTable()
 			return false;
 		}
 
+		tempType = (symbolCode == INTTK) ? INT : CHAR;
 		getNext();
 		if (!hasNext)
 		{
@@ -1135,6 +1282,9 @@ bool SyntaxAnalysis::parameterTable()
 			return false;
 		}
 
+		currentIdentifier = lexicalAnalysis.getToken();
+		symbolTable.push(Parameter(currentIdentifier, currentDomain, tempType));
+		parameterNumber++;
 		getNext();
 	}
 
@@ -1143,10 +1293,10 @@ bool SyntaxAnalysis::parameterTable()
 }
 
 /*＜复合语句＞ ::= ［＜常量说明＞］［＜变量说明＞］＜语句列＞*/
-bool SyntaxAnalysis::compoundStatement(string domain)
+bool SyntaxAnalysis::compoundStatement()
 {
-	constDeclaration(domain);
-	varDeclaration(false);
+	constDeclaration();
+	varDeclaration();
 	if (!statementQueue())
 	{
 		return false;
@@ -1169,8 +1319,9 @@ bool SyntaxAnalysis::functionWithoutRet()
 		return false;
 	}
 
-	functionName = lexicalAnalysis.getToken();
-	symbolTable.push(Function(functionName, VOID));
+	currentIdentifier = lexicalAnalysis.getToken();
+
+	currentDomain = currentIdentifier;
 
 	getNext();
 	if (!hasNext || symbolCode != LPARENT)
@@ -1186,7 +1337,8 @@ bool SyntaxAnalysis::functionWithoutRet()
 
 	if (!hasNext || symbolCode != RPARENT)
 	{
-		return false;
+		errorHandler.error(lexicalAnalysis.getLineCount(), L);
+		lexicalAnalysis.setAutoComplete();
 	}
 
 	getNext();
@@ -1196,7 +1348,7 @@ bool SyntaxAnalysis::functionWithoutRet()
 	}
 
 	getNext();
-	if (!compoundStatement(functionName))
+	if (!compoundStatement())
 	{
 		return false;
 	}
@@ -1207,6 +1359,9 @@ bool SyntaxAnalysis::functionWithoutRet()
 	}
 
 	getNext();
+
+	symbolTable.push(Function(currentDomain, VOID, parameterNumber));
+
 	output.syntaxAnalysisOutput("无返回值函数定义");
 	return true;
 }
@@ -1243,7 +1398,8 @@ bool SyntaxAnalysis::statement()
 		{
 			if (!hasNext || symbolCode != SEMICN)
 			{
-				return false;
+				errorHandler.error(lexicalAnalysis.getLineCount(), K);
+				lexicalAnalysis.setAutoComplete();
 			}
 			getNext();
 			output.syntaxAnalysisOutput("语句");
@@ -1254,21 +1410,14 @@ bool SyntaxAnalysis::statement()
 		{
 			if (!hasNext || symbolCode != SEMICN)
 			{
-				return false;
+				errorHandler.error(lexicalAnalysis.getLineCount(), K);
+				lexicalAnalysis.setAutoComplete();
 			}
 			getNext();
 			output.syntaxAnalysisOutput("语句");
 			return true;
 		}
 		return false;
-	}
-
-	//处理空语句
-	if (symbolCode == SEMICN)
-	{
-		getNext();
-		output.syntaxAnalysisOutput("语句");
-		return true;
 	}
 
 	if (loopStatement())
@@ -1293,7 +1442,8 @@ bool SyntaxAnalysis::statement()
 	{
 		if (symbolCode != SEMICN)
 		{
-			return false;
+			errorHandler.error(lexicalAnalysis.getLineCount(), K);
+			lexicalAnalysis.setAutoComplete();
 		}
 		getNext();
 		output.syntaxAnalysisOutput("语句");
@@ -1338,7 +1488,18 @@ bool SyntaxAnalysis::statement()
 		return true;
 	}
 
-	return false;
+	//处理空语句
+	if (symbolCode == SEMICN)
+	{
+		getNext();
+		output.syntaxAnalysisOutput("语句");
+		return true;
+	}
+
+	errorHandler.error(lexicalAnalysis.getLineCount(), K);
+	lexicalAnalysis.setAutoComplete();
+	getNext();
+	return true;
 }
 
 /*＜循环语句＞ ::=  while '('＜条件＞')'＜语句＞|
@@ -1366,7 +1527,8 @@ bool SyntaxAnalysis::loopStatement()
 
 		if (!hasNext || symbolCode != RPARENT)
 		{
-			return false;
+			errorHandler.error(lexicalAnalysis.getLineCount(), L);
+			lexicalAnalysis.setAutoComplete();
 		}
 
 		getNext();
@@ -1391,6 +1553,13 @@ bool SyntaxAnalysis::loopStatement()
 			return false;
 		}
 
+		currentIdentifier = lexicalAnalysis.getToken();
+
+		if (!symbolTable.hasItem(currentIdentifier, currentDomain))
+		{
+			errorHandler.error(lexicalAnalysis.getLineCount(), C);
+		}
+
 		getNext();
 		if (!hasNext || symbolCode != ASSIGN)
 		{
@@ -1405,7 +1574,8 @@ bool SyntaxAnalysis::loopStatement()
 
 		if (!hasNext || symbolCode != SEMICN)
 		{
-			return false;
+			errorHandler.error(lexicalAnalysis.getLineCount(), K);
+			lexicalAnalysis.setAutoComplete();
 		}
 
 		getNext();
@@ -1425,6 +1595,13 @@ bool SyntaxAnalysis::loopStatement()
 			return false;
 		}
 
+		currentIdentifier = lexicalAnalysis.getToken();
+
+		if (!symbolTable.hasItem(currentIdentifier, currentDomain))
+		{
+			errorHandler.error(lexicalAnalysis.getLineCount(), C);
+		}
+
 		getNext();
 		if (!hasNext || symbolCode != ASSIGN)
 		{
@@ -1435,6 +1612,13 @@ bool SyntaxAnalysis::loopStatement()
 		if (!hasNext || symbolCode != IDENFR)
 		{
 			return false;
+		}
+
+		currentIdentifier = lexicalAnalysis.getToken();
+
+		if (!symbolTable.hasItem(currentIdentifier, currentDomain))
+		{
+			errorHandler.error(lexicalAnalysis.getLineCount(), C);
 		}
 
 		getNext();
@@ -1452,7 +1636,8 @@ bool SyntaxAnalysis::loopStatement()
 
 		if (!hasNext || symbolCode != RPARENT)
 		{
-			return false;
+			errorHandler.error(lexicalAnalysis.getLineCount(), L);
+			lexicalAnalysis.setAutoComplete();
 		}
 
 		getNext();
@@ -1502,8 +1687,8 @@ bool SyntaxAnalysis::ifStatement()
 
 	if (!hasNext || symbolCode != RPARENT)
 	{
-
-		return false;
+		errorHandler.error(lexicalAnalysis.getLineCount(), L);
+		lexicalAnalysis.setAutoComplete();
 	}
 
 	getNext();
@@ -1623,12 +1808,33 @@ bool SyntaxAnalysis::factor()
 		getNext();
 		if (!hasNext)
 		{
+			currentIdentifier = lexicalAnalysis.getToken();
+
+			if (!symbolTable.hasItem(currentIdentifier, currentDomain))
+			{
+				errorHandler.error(lexicalAnalysis.getLineCount(), C);
+			}
+			else
+			{
+				exprType = symbolTable.getCurrentType();
+			}
 			output.syntaxAnalysisOutput("因子", 1574);
 			return true;
 		}
 
 		if (symbolCode != LPARENT)
 		{
+			currentIdentifier = lexicalAnalysis.getToken();
+
+			if (!symbolTable.hasItem(currentIdentifier, currentDomain))
+			{
+				errorHandler.error(lexicalAnalysis.getLineCount(), C);
+			}
+			else
+			{
+				exprType = symbolTable.getCurrentType();
+			}
+
 			if (symbolCode == LBRACK)
 			{
 				getNext();
@@ -1643,7 +1849,8 @@ bool SyntaxAnalysis::factor()
 				}
 				if (symbolCode != RBRACK)
 				{
-					return false;
+					errorHandler.error(lexicalAnalysis.getLineCount(), M);
+					lexicalAnalysis.setAutoComplete();
 				}
 
 				getNext();
@@ -1667,7 +1874,8 @@ bool SyntaxAnalysis::factor()
 
 					if (symbolCode != RBRACK)
 					{
-						return false;
+						errorHandler.error(lexicalAnalysis.getLineCount(), M);
+						lexicalAnalysis.setAutoComplete();
 					}
 					getNext();
 					output.syntaxAnalysisOutput("因子", 1621);
@@ -1682,8 +1890,13 @@ bool SyntaxAnalysis::factor()
 		else
 		{
 			retract(1638);
+			SymbolTableItemType temp = symbolTable.getFunctionType(currentIdentifier);
 			if (callFunction())
 			{
+				if (temp != VOID)
+				{
+					exprType = temp;
+				}
 				output.syntaxAnalysisOutput("因子", 1636);
 				return true;
 			}
@@ -1705,7 +1918,8 @@ bool SyntaxAnalysis::factor()
 		}
 		if (symbolCode != RPARENT)
 		{
-			return false;
+			errorHandler.error(lexicalAnalysis.getLineCount(), L);
+			lexicalAnalysis.setAutoComplete();
 		}
 		
 		getNext();
@@ -1732,6 +1946,15 @@ bool SyntaxAnalysis::callFunction()
 		return false;
 	}
 
+	currentIdentifier = lexicalAnalysis.getToken();
+
+	Function* function = symbolTable.getFunction(currentIdentifier);
+
+	if (function == nullptr)
+	{
+		errorHandler.error(lexicalAnalysis.getLineCount(), C);
+	}
+
 	string name = lexicalAnalysis.getToken();
 	getNext();
 	if (symbolCode != LPARENT)
@@ -1740,14 +1963,20 @@ bool SyntaxAnalysis::callFunction()
 	}
 
 	getNext();
-	if (!parameterValueTable())
+	if (!parameterValueTable(currentIdentifier))
 	{
 		return false;
 	}
 
 	if (!hasNext || symbolCode != RPARENT)
 	{
-		return false;
+		errorHandler.error(lexicalAnalysis.getLineCount(), L);
+		lexicalAnalysis.setAutoComplete();
+	}
+
+	if (function != nullptr && parameterNumber != function->getParaCount())
+	{
+		errorHandler.error(lexicalAnalysis.getLineCount(), D);
 	}
 
 	getNext();
@@ -1763,13 +1992,16 @@ bool SyntaxAnalysis::callFunction()
 }
 
 /*＜值参数表＞ ::= ＜表达式＞{,＜表达式＞}｜＜空＞*/
-bool SyntaxAnalysis::parameterValueTable()
+bool SyntaxAnalysis::parameterValueTable(string functionName)
 {
 	if (!hasNext)
 	{
 		return false;
 	}
 
+	symbolTable.findParameter(functionName);
+
+	parameterNumber = 0;
 	//空, 特殊处理 不预读
 	if (symbolCode == RPARENT)
 	{
@@ -1781,6 +2013,8 @@ bool SyntaxAnalysis::parameterValueTable()
 	{
 		return false;
 	}
+
+	parameterNumber++;
 
 	while (true)
 	{
@@ -1794,6 +2028,7 @@ bool SyntaxAnalysis::parameterValueTable()
 		{
 			return false;
 		}
+		parameterNumber++;
 	}
 
 	output.syntaxAnalysisOutput("值参数表");
@@ -1809,6 +2044,19 @@ bool SyntaxAnalysis::assignStatement()
 		return false;
 	}
 
+	SymbolTableItemKind kind = VAR;
+
+	currentIdentifier = lexicalAnalysis.getToken();
+
+	if (!symbolTable.hasItem(currentIdentifier, currentDomain))
+	{
+		errorHandler.error(lexicalAnalysis.getLineCount(), C);
+	}
+	else
+	{
+		kind = symbolTable.getCurrentKind();
+	}
+
 	getNext();
 	if (hasNext && symbolCode == LBRACK)
 	{
@@ -1819,7 +2067,8 @@ bool SyntaxAnalysis::assignStatement()
 		}
 		if (!hasNext || symbolCode != RBRACK)
 		{
-			return false;
+			errorHandler.error(lexicalAnalysis.getLineCount(), M);
+			lexicalAnalysis.setAutoComplete();
 		}
 
 		getNext();
@@ -1832,7 +2081,8 @@ bool SyntaxAnalysis::assignStatement()
 			}
 			if (!hasNext || symbolCode != RBRACK)
 			{
-				return false;
+				errorHandler.error(lexicalAnalysis.getLineCount(), M);
+				lexicalAnalysis.setAutoComplete();
 			}
 
 			getNext();
@@ -1847,6 +2097,10 @@ bool SyntaxAnalysis::assignStatement()
 				return false;
 			}
 
+			if (kind == CONST)
+			{
+				errorHandler.error(lexicalAnalysis.getLineCount(), J);
+			}
 			output.syntaxAnalysisOutput("赋值语句");
 			return true;
 		}
@@ -1862,6 +2116,10 @@ bool SyntaxAnalysis::assignStatement()
 			return false;
 		}
 
+		if (kind == CONST)
+		{
+			errorHandler.error(lexicalAnalysis.getLineCount(), J);
+		}
 		output.syntaxAnalysisOutput("赋值语句");
 		return true;
 	}
@@ -1877,6 +2135,10 @@ bool SyntaxAnalysis::assignStatement()
 		return false;
 	}
 
+	if (kind == CONST)
+	{
+		errorHandler.error(lexicalAnalysis.getLineCount(), J);
+	}
 	output.syntaxAnalysisOutput("赋值语句");
 	return true;
 }
@@ -1888,6 +2150,8 @@ bool SyntaxAnalysis::scanfStatement()
 	{
 		return false;
 	}
+
+	SymbolTableItemKind kind = VAR;
 
 	getNext();
 	if (!hasNext || symbolCode != LPARENT)
@@ -1901,13 +2165,30 @@ bool SyntaxAnalysis::scanfStatement()
 		return false;
 	}
 
-	getNext();
-	if (!hasNext || symbolCode != RPARENT)
+	currentIdentifier = lexicalAnalysis.getToken();
+
+	if (!symbolTable.hasItem(currentIdentifier, currentDomain))
 	{
-		return false;
+		errorHandler.error(lexicalAnalysis.getLineCount(), C);
+	}
+	else
+	{
+		kind = symbolTable.getCurrentKind();
 	}
 
 	getNext();
+	if (!hasNext || symbolCode != RPARENT)
+	{
+		errorHandler.error(lexicalAnalysis.getLineCount(), L);
+		lexicalAnalysis.setAutoComplete();
+	}
+
+	getNext();
+
+	if (kind == CONST)
+	{
+		errorHandler.error(lexicalAnalysis.getLineCount(), J);
+	}
 	output.syntaxAnalysisOutput("读语句");
 	return true;
 }
@@ -1960,7 +2241,8 @@ bool SyntaxAnalysis::printfStatement()
 
 	if (symbolCode != RPARENT)
 	{
-		return false;
+		errorHandler.error(lexicalAnalysis.getLineCount(), L);
+		lexicalAnalysis.setAutoComplete();
 	}
 
 	getNext();
@@ -1990,7 +2272,8 @@ bool SyntaxAnalysis::switchStatement()
 
 	if (!hasNext || symbolCode != RPARENT)
 	{
-		return false;
+		errorHandler.error(lexicalAnalysis.getLineCount(), L);
+		lexicalAnalysis.setAutoComplete();
 	}
 
 	getNext();
@@ -2006,6 +2289,7 @@ bool SyntaxAnalysis::switchStatement()
 	}
 	if (!defaultStatement())
 	{
+		errorHandler.error(lexicalAnalysis.getLineCount(), P);
 		return false;
 	}
 
@@ -2110,7 +2394,8 @@ bool SyntaxAnalysis::returnStatement()
 
 		if (!hasNext || symbolCode != RPARENT)
 		{
-			return false;
+			errorHandler.error(lexicalAnalysis.getLineCount(), L);
+			lexicalAnalysis.setAutoComplete();
 		}
 
 		getNext();
@@ -2141,7 +2426,6 @@ bool SyntaxAnalysis::integer()
 			return false;
 		}
 		isMinus = (symbolCode == (PLUS)) ? false : true;
-		
 	}
 
 	else if (!uinteger())
@@ -2149,7 +2433,7 @@ bool SyntaxAnalysis::integer()
 		return false;
 	}
 
-	currentValue = (isMinus) ? -lexicalAnalysis.getValue() : lexicalAnalysis.getValue();
+	currentValue = (isMinus) ? currentValue : currentValue;
 	output.syntaxAnalysisOutput("整数");
 	return true;
 }
@@ -2164,6 +2448,8 @@ bool SyntaxAnalysis::uinteger()
 	{
 		return false;
 	}
+	currentValue = lexicalAnalysis.getValue();
+
 	getNext();
 	output.syntaxAnalysisOutput("无符号整数");
 	return true;
@@ -2184,9 +2470,18 @@ bool SyntaxAnalysis::constant()
 			return false;
 		}
 	}
+	else
+	{
+		currentChar = lexicalAnalysis.getToken().c_str()[0];
+		currentConstant = IntOrChar(currentChar);
+	}
 	if (!isInteger)
 	{
 		getNext();
+	}
+	else
+	{
+		currentConstant = IntOrChar(currentValue);
 	}
 	output.syntaxAnalysisOutput("常量");
 	return true;
@@ -2201,6 +2496,7 @@ bool SyntaxAnalysis::character()
 
 	if (symbolCode == CHARCON && lexicalAnalysis.isCharacter())
 	{
+		exprType = CHAR;
 		getNext();
 		return true;
 	}

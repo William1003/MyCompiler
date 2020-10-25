@@ -14,11 +14,12 @@ int main()
 	string ofname = "output.txt";
 	Output myOutput(ofname);
 	ErrorHandler errorHandler;
-	LexicalAnalysis lexicalAnalysis(myOutput);
+	LexicalAnalysis lexicalAnalysis(myOutput, errorHandler);
 	lexicalAnalysis.readFile(ifname);
 	SymbolTable table;
 	SyntaxAnalysis syntaxAnalysis(errorHandler, lexicalAnalysis, myOutput, table);
 	syntaxAnalysis.startSyntaxAnalysis();
 	myOutput.outputToFile();
+	table.output();
 	return 0;
 }

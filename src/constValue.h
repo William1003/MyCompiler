@@ -3,6 +3,9 @@
 
 #define RESERVER_NUM 15
 #define SYMBOL_NUM 39
+#define ERROR_NUM 16
+#define TYPE_NUM 3
+#define KIND_NUM 5
 
 enum SymbolCode
 {
@@ -63,4 +66,8 @@ enum SymbolTableItemKind
 	PARAMETER
 };
 
+enum ErrorCode
+{
+	A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P
+};
 #endif // !_CONST_VALUE_H_

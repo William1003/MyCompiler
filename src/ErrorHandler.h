@@ -3,6 +3,7 @@
 
 #include<string>
 #include<fstream>
+#include"constValue.h"
 
 using namespace std;
 
@@ -14,8 +15,9 @@ private:
 
 public:
 	ErrorHandler();
-	void lexicalError();
+	void lexicalError(int line);
 	void syntaxError(int line, string functionName);
+	void error(int line, ErrorCode errorCode);
 };
 
 #endif // !_ERROR_HANDLER_H_
