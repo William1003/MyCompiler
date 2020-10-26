@@ -92,7 +92,7 @@ SymbolTableItemType SymbolTable::getCurrentType()
 	{
 		return VOID;
 	}
-	return table[index++].getType();
+	return table[index].getType();
 }
 
 SymbolTableItemType SymbolTable::getFunctionType(string functionName)
@@ -123,5 +123,32 @@ bool SymbolTable::hasFunction(string functionName)
 		}
 	}
 	index = 0;
+	return false;
+}
+
+bool SymbolTable::findParameter(string functionName)
+{
+	for (index = index - 1; index >= 0; index--)
+	{
+		if (!(table[index].getKind() == PARAMETER && table[index].getDomain() == functionName))
+		{
+			index++;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool SymbolTable::nextParameter(string functionName)
+{
+	if (index >= count || index + 1 >= count)
+	{
+		return false;
+	}
+	if (table[index + 1].getDomain() == functionName && table[index + 1].getKind() == PARAMETER)
+	{
+		index++;
+		return true;
+	}
 	return false;
 }

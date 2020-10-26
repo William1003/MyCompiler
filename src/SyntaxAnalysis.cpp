@@ -756,7 +756,7 @@ bool SyntaxAnalysis::varWithoutInit()
 bool SyntaxAnalysis::varWithInit()
 {
 	int dimension = 0;
-	int row, column;
+	int row = 1, column = 1;
 
 	if (!hasNext || (symbolCode != INTTK && symbolCode != CHARTK))
 	{
@@ -2036,7 +2036,6 @@ bool SyntaxAnalysis::callFunction()
 		lexicalAnalysis.setAutoComplete();
 	}
 
-	int n = function.getParaCount();
 	if (hasFunction && parameterNumber != function.getParaCount())
 	{
 		errorHandler.error(lexicalAnalysis.getLineCount(), D);
@@ -2072,6 +2071,7 @@ bool SyntaxAnalysis::parameterValueTable()
 		return true;
 	}
 
+	bool hasPara = symbolTable.findParameter(currentDomain);
 	SymbolTableItemType paraType = symbolTable.getCurrentType();
 
 	if (!expression())

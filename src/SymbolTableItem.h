@@ -11,13 +11,13 @@ using namespace std;
 class IntOrChar
 {
 private:
-	int intValue;
-	char charValue;
+	int intValue = 0;
+	char charValue = '\0';
 
 public:
 	IntOrChar() {}
-	IntOrChar(int value) : intValue(value) {}
-	IntOrChar(char value) : charValue(value) {}
+	IntOrChar(int value) { intValue = value; charValue = '\0'; }
+	IntOrChar(char value) { charValue = value; intValue = 0; }
 	void setValue(int value)
 	{
 		this->intValue = value;
@@ -62,7 +62,14 @@ public:
 	SymbolTableItem(string name, string domain, SymbolTableItemKind kind, char value) :
 		name(name), domain(domain), kind(kind), type(CHAR), charValue(value) {}
 	SymbolTableItem(string name, string domain, SymbolTableItemType type, int dimension, int row, int column) :
-		name (name), domain(domain), kind(ARRAY), type(type), dimension(dimension), row(row), column(column) {}
+		name(name), domain(domain), kind(ARRAY), type(type), dimension(dimension), row(row), column(column) 
+	{
+		for (int i = 0; i < row; i++)
+		{
+			vector<IntOrChar> temp;
+			values2D.push_back(temp);
+		}
+	}
 	SymbolTableItem(string name, SymbolTableItemType type, int paraNum) :
 		name(name), domain("0"), kind(FUNCTION), type(type), parameterCount(paraNum) {}
 	bool nameEqual(string name);
@@ -71,7 +78,6 @@ public:
 	bool isItemInDomain(string name, string domain);
 	string getAttr();
 	bool isFunction(string name);
-	bool isParameter(string functionName);
 	SymbolTableItemType getType()
 	{
 		return type;

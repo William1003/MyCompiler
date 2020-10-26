@@ -27,6 +27,8 @@ public:
 	SymbolTableItemType getFunctionType(string functionName);
 	SymbolTableItemKind getKind(string name);
 	SymbolTableItemKind getCurrentKind();
+	bool findParameter(string functionName);
+	bool nextParameter(string functionName);
 };
 
 #endif // !_SYMBOL_TABLE_H_
