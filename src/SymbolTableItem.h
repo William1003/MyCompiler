@@ -43,10 +43,28 @@ private:
 	string domain;
 	SymbolTableItemKind kind;
 	SymbolTableItemType type;
+	int intValue = 0;
+	char charValue = '\0';
+	int dimension = 0;
+	int row = 1;
+	int column = 1;
+	int currentRow = 0;
+	int currentColumn = 0;
+	vector<IntOrChar> values1D;
+	vector<vector<IntOrChar>> values2D;
+	int parameterCount = 0;
 	
 public:
 	SymbolTableItem(string name, string domain, SymbolTableItemKind kind, SymbolTableItemType type) : 
 		name(name), domain(domain), kind(kind), type(type) {}
+	SymbolTableItem(string name, string domain, SymbolTableItemKind kind, int value) :
+		name(name), domain(domain), kind(kind), type(INT), intValue(value) {}
+	SymbolTableItem(string name, string domain, SymbolTableItemKind kind, char value) :
+		name(name), domain(domain), kind(kind), type(CHAR), charValue(value) {}
+	SymbolTableItem(string name, string domain, SymbolTableItemType type, int dimension, int row, int column) :
+		name (name), domain(domain), kind(ARRAY), type(type), dimension(dimension), row(row), column(column) {}
+	SymbolTableItem(string name, SymbolTableItemType type, int paraNum) :
+		name(name), domain("0"), kind(FUNCTION), type(type), parameterCount(paraNum) {}
 	bool nameEqual(string name);
 	bool hasRet();
 	bool itemDuplicated(const SymbolTableItem& item);
@@ -62,99 +80,13 @@ public:
 	{
 		return kind;
 	}
-	virtual void doSomething();
+	string getDomain() { return domain; }
+	bool addValue(int value);
+	bool addValue(char value);
+	void nextRow();
+	bool isFullyAssign();
+	void setParaNum(int n);
+	int getParaCount();
 };
-
-class Const : public SymbolTableItem
-{
-private:
-	IntOrChar value;
-
-public:
-	Const(string name, string domain, int value) :
-		SymbolTableItem(name, domain, CONST, INT), value(IntOrChar(value)) {}
-	Const(string name, string domain, char value) :
-		SymbolTableItem(name, domain, CONST, CHAR), value(IntOrChar(value)) {}
-};
-
-class Var : public SymbolTableItem
-{
-private:
-	IntOrChar value;
-
-public:
-	Var(string name, string domain, SymbolTableItemType type) :
-		SymbolTableItem(name, domain, VAR, type) {}
-	Var(string name, string domain, int value) :
-		SymbolTableItem(name, domain, VAR, INT), value(IntOrChar(value)) {}
-	Var(string name, string domain, char value) :
-		SymbolTableItem(name, domain, VAR, CHAR), value(IntOrChar(value)) {}
-	Var(string name, string domain, IntOrChar value, SymbolTableItemType type) :
-		SymbolTableItem(name, domain, VAR, type), value(value) {}
-};
-
-class Array : public SymbolTableItem
-{
-private:
-	int dimension;
-	int row;
-	int column;
-	int currentRow = 0;
-	int currentColumn = 0;
-	vector<IntOrChar> values1D;
-	vector<vector<IntOrChar>> values2D;
-
-public:
-	Array(string name, string domain, int column, SymbolTableItemType type) : 
-		SymbolTableItem(name, domain, ARRAY, type), dimension(1), row(1), column(column) {}
-	Array(string name, string domain, int row, int column, SymbolTableItemType type) :
-		SymbolTableItem(name, domain, ARRAY, type), dimension(2), row(row), column(column) 
-	{
-		for (int i = 0; i < row; i++)
-		{
-			vector<IntOrChar> temp;
-			values2D.push_back(temp);
-		}
-	}
-	bool addValue(IntOrChar value);
-	void nextRow() 
-	{ 
-		currentRow++; 
-		currentColumn = 0;
-	}
-	bool isFullyAssign()
-	{
-		return currentRow == row && currentColumn == column;
-	}
-};
-
-class Function : public SymbolTableItem
-{
-private:
-	int parameterNumber = 0;
-public:
-	Function(string name, SymbolTableItemType type, int n) :
-		SymbolTableItem(name, "0", FUNCTION, type), parameterNumber(n) {}
-	int getParaCount() { return parameterNumber; }
-};
-
-class Parameter : public SymbolTableItem
-{
-private:
-	IntOrChar value;
-
-public:
-	Parameter(string name, string domain, SymbolTableItemType type) :
-		SymbolTableItem(name, domain, PARAMETER, type) {}
-	void setValue(int value)
-	{
-		this->value.setValue(value);
-	}
-	void setValue(char value)
-	{
-		this->value.setValue(value);
-	}
-};
-
 
 #endif // !_SYMBOL_TABLE_ITEM_H_

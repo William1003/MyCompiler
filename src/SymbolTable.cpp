@@ -3,8 +3,9 @@
 SymbolTable::SymbolTable()
 {
 	table.clear();
-	count = 0;
+	count = 1;
 	symbolTableFile.open("symbolTable.txt");
+	table.push_back(SymbolTableItem("0", "1", FUNCTION, VOID));
 }
 
 bool SymbolTable::hasItem(string name, string domain)
@@ -76,46 +77,22 @@ void SymbolTable::output()
 	}
 }
 
-Function* SymbolTable::getFunction(string name)
+SymbolTableItem& SymbolTable::getCurrent()
 {
-	for (int i = 0; i < count; i++)
+	if (index >= count)
 	{
-		if (table[i].isFunction(name))
-		{
-			return dynamic_cast<Function*>(&table[i]);
-		}
+		return table[0];
 	}
-	return nullptr;
+	return table[index++];
 }
 
-void SymbolTable::findParameter(string functionName)
-{
-	for (int i = 0; i < count; i++)
-	{
-		if (table[i].nameEqual(functionName))
-		{
-			index = i + 1;
-			break;
-		}
-	}
-}
-
-SymbolTableItemType SymbolTable::getParaType(string functionName)
+SymbolTableItemType SymbolTable::getCurrentType()
 {
 	if (index >= count)
 	{
 		return VOID;
 	}
-	if (table[index].isParameter(functionName))
-	{
-		return table[index++].getType();
-	}
-	return VOID;
-}
-
-SymbolTableItemType SymbolTable::getCurrentType()
-{
-	return table[index].getType();
+	return table[index++].getType();
 }
 
 SymbolTableItemType SymbolTable::getFunctionType(string functionName)
@@ -133,4 +110,18 @@ SymbolTableItemType SymbolTable::getFunctionType(string functionName)
 SymbolTableItemKind SymbolTable::getCurrentKind()
 {
 	return table[index].getKind();
+}
+
+bool SymbolTable::hasFunction(string functionName)
+{
+	for (int i = 0; i < count; i++)
+	{
+		if (table[i].isFunction(functionName))
+		{
+			index = i;
+			return true;
+		}
+	}
+	index = 0;
+	return false;
 }

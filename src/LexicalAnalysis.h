@@ -29,6 +29,7 @@ private:
 	void getChar();			//读下一个字符
 	void retract();			//回退一个字符
 	ErrorHandler& errorHandler;
+	void skipRead(char target);
 
 public:
 	LexicalAnalysis(Output& output, ErrorHandler& errorHandler);

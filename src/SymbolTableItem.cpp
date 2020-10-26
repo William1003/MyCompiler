@@ -36,7 +36,26 @@ bool SymbolTableItem::hasRet()
 	return false;
 }
 
-bool Array::addValue(IntOrChar value)
+bool SymbolTableItem::addValue(int value)
+{
+	if (currentRow >= row || currentColumn >= column)
+	{
+		return false;
+	}
+	if (dimension == 1)
+	{
+		values1D.push_back(value);
+		currentColumn++;
+	}
+	if (dimension == 2)
+	{
+		values2D[currentRow].push_back(value);
+		currentColumn++;
+	}
+	return true;
+}
+
+bool SymbolTableItem::addValue(char value)
 {
 	if (currentRow >= row || currentColumn >= column)
 	{
@@ -70,11 +89,23 @@ bool SymbolTableItem::isFunction(string name)
 	return this->name == name && kind == FUNCTION;
 }
 
-void SymbolTableItem::doSomething()
+int SymbolTableItem::getParaCount()
 {
+	return this->parameterCount;
 }
 
-bool SymbolTableItem::isParameter(string functionName)
+void SymbolTableItem::setParaNum(int n)
 {
-	return kind == PARAMETER && domain == functionName;
+	this->parameterCount = n;
+}
+void SymbolTableItem::nextRow()
+{
+	currentRow++;
+	currentColumn = 0;
+}
+
+bool SymbolTableItem::isFullyAssign()
+{
+	// TODO:填满
+	return currentRow == row && currentColumn == column;
 }

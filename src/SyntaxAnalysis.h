@@ -41,7 +41,7 @@ public:
 	bool functionWithoutRet();	//无返回值函数定义
 	bool integer();				//整数
 	bool uinteger();			//无符号整数
-	bool constant();			//常量
+	SymbolTableItemType constant();			//常量
 	bool declareHeader();		//声明头部
 	bool parameterTable();		//参数表
 	bool compoundStatement();	//复合语句
@@ -67,7 +67,7 @@ public:
 	bool step();				//步长
 	bool myString();			//字符串
 	bool mainFunction();		//主函数
-	bool parameterValueTable(string functionName);	//值参数表
+	bool parameterValueTable();	//值参数表
 };
 
 #endif // !_SYNTAX_ANALYSIS_H_

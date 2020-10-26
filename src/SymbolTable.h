@@ -19,9 +19,9 @@ public:
 	bool push(const SymbolTableItem& item);
 	bool hasRet(string functionName);
 	bool hasItem(string name, string domain);
+	bool hasFunction(string functionName);
 	void output();
-	Function* getFunction(string name);
-	void findParameter(string functionName);
+	SymbolTableItem& getCurrent();
 	SymbolTableItemType getParaType(string functionName);
 	SymbolTableItemType getCurrentType();
 	SymbolTableItemType getFunctionType(string functionName);
