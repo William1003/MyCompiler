@@ -128,11 +128,11 @@ bool SymbolTable::hasFunction(string functionName)
 
 bool SymbolTable::findParameter(string functionName)
 {
-	for (index = index - 1; index >= 0; index--)
+	for (int i = 0; i < count; i++)
 	{
-		if (!(table[index].getKind() == PARAMETER && table[index].getDomain() == functionName))
+		if (table[i].getKind() == PARAMETER && table[i].getDomain() == functionName)
 		{
-			index++;
+			index = i;
 			return true;
 		}
 	}

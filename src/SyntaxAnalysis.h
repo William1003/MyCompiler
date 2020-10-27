@@ -24,6 +24,9 @@ private:
 	string currentDomain;
 	int parameterNumber = 0;
 	SymbolTableItemType exprType;
+	bool needRet = false;
+	bool retStatement = false;
+	string callFunctionName;
 
 public:
 	SyntaxAnalysis(ErrorHandler& errorHandler, LexicalAnalysis& lexicalAnalysis, Output& output, SymbolTable& table);
@@ -55,7 +58,7 @@ public:
 	bool printfStatement();		//写语句
 	bool switchStatement();		//情况语句
 	bool caseTable();			//情况表
-	bool caseStatement();		//情况子语句
+	bool caseStatement(SymbolTableItemType type);		//情况子语句
 	bool returnStatement();		//返回语句
 	bool defaultStatement();	//缺省
 	bool condition();			//条件

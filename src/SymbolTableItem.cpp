@@ -107,5 +107,5 @@ void SymbolTableItem::nextRow()
 bool SymbolTableItem::isFullyAssign()
 {
 	// TODO:填满
-	return currentRow == row && currentColumn == column;
+	return currentRow + 1 == row && currentColumn == column;
 }

@@ -375,6 +375,8 @@ bool SyntaxAnalysis::constDefinition()
 				return false;
 			}
 
+			currentIdentifier = lexicalAnalysis.getToken();
+
 			getNext();
 			if (!hasNext)
 			{
@@ -622,6 +624,14 @@ bool SyntaxAnalysis::varWithoutInit()
 		}
 	}
 	
+	if (dimension == 0)
+	{
+		if (!symbolTable.push(SymbolTableItem(currentIdentifier, currentDomain, tempType, dimension, row, column)))
+		{
+			errorHandler.error(lexicalAnalysis.getLineCount(), B);
+		}
+	}
+
 	while (true)
 	{
 		if (!hasNext || symbolCode != COMMA)
@@ -1035,7 +1045,10 @@ bool SyntaxAnalysis::varWithInit()
 			{
 				errorHandler.error(lexicalAnalysis.getLineCount(), N);
 			}
-			symbolTable.push(item);
+			if (!symbolTable.push(item))
+			{
+				errorHandler.error(lexicalAnalysis.getLineCount(), B);
+			}
 			
 			getNext();
 			output.syntaxAnalysisOutput("变量定义及初始化");
@@ -1124,7 +1137,10 @@ bool SyntaxAnalysis::varWithInit()
 		{
 			errorHandler.error(lexicalAnalysis.getLineCount(), N);
 		}
-		symbolTable.push(item);
+		if (!symbolTable.push(item))
+		{
+			errorHandler.error(lexicalAnalysis.getLineCount(), B);
+		}
 		getNext();
 		output.syntaxAnalysisOutput("变量定义及初始化");
 		return true;
@@ -1158,7 +1174,10 @@ bool SyntaxAnalysis::varWithInit()
 	SymbolTableItem item = (tempType == INT) ? SymbolTableItem(currentIdentifier, currentDomain, VAR, currentValue) :
 		SymbolTableItem(currentIdentifier, currentDomain, VAR, currentChar);
 
-	symbolTable.push(item);
+	if (!symbolTable.push(item))
+	{
+		errorHandler.error(lexicalAnalysis.getLineCount(), B);
+	}
 	output.syntaxAnalysisOutput("变量定义及初始化");
 	return true;
 }
@@ -1203,7 +1222,10 @@ bool SyntaxAnalysis::functionWithRet()
 	}
 
 	SymbolTableItem function = SymbolTableItem(currentDomain, temp, parameterNumber);
-	symbolTable.push(function);
+	if (!symbolTable.push(function))
+	{
+		errorHandler.error(lexicalAnalysis.getLineCount(), B);
+	}
 
 	if (!hasNext)
 	{
@@ -1224,10 +1246,17 @@ bool SyntaxAnalysis::functionWithRet()
 	}
 	getNext();
 
+	needRet = true;
+	retStatement = false;
+
 	if (!compoundStatement())
 	{
 		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
+	}
+
+	if (!retStatement) {
+		errorHandler.error(lexicalAnalysis.getLineCount(), H);
 	}
 
 	if (symbolCode != RBRACE)
@@ -1289,7 +1318,8 @@ bool SyntaxAnalysis::parameterTable()
 
 	if (symbolCode != INTTK && symbolCode != CHARTK)
 	{
-		return false;
+		output.syntaxAnalysisOutput("参数表");
+		return true;
 	}
 
 	SymbolTableItemType tempType = (symbolCode == INTTK) ? INT : CHAR;
@@ -1399,7 +1429,10 @@ bool SyntaxAnalysis::functionWithoutRet()
 	}
 
 	SymbolTableItem function = SymbolTableItem(currentDomain, VOID, parameterNumber);
-	symbolTable.push(function);
+	if (!symbolTable.push(function))
+	{
+		errorHandler.error(lexicalAnalysis.getLineCount(), B);
+	}
 
 	if (!hasNext || symbolCode != RPARENT)
 	{
@@ -1413,6 +1446,8 @@ bool SyntaxAnalysis::functionWithoutRet()
 		return false;
 	}
 
+	needRet = false;
+	retStatement = false;
 	getNext();
 	if (!compoundStatement())
 	{
@@ -1426,6 +1461,7 @@ bool SyntaxAnalysis::functionWithoutRet()
 
 	getNext();
 
+	retStatement = false;
 	output.syntaxAnalysisOutput("无返回值函数定义");
 	return true;
 }
@@ -1504,6 +1540,7 @@ bool SyntaxAnalysis::statement()
 
 	if (returnStatement())
 	{
+		retStatement = true;
 		if (symbolCode != SEMICN)
 		{
 			errorHandler.error(lexicalAnalysis.getLineCount(), K);
@@ -1782,6 +1819,10 @@ bool SyntaxAnalysis::condition()
 	{
 		return false;
 	}
+	if (exprType != INT)
+	{
+		errorHandler.error(lexicalAnalysis.getLineCount(), F);
+	}
 	if (!relationOp())
 	{
 		return false;
@@ -1789,6 +1830,10 @@ bool SyntaxAnalysis::condition()
 	if (!expression())
 	{
 		return false;
+	}
+	if (exprType != INT)
+	{
+		errorHandler.error(lexicalAnalysis.getLineCount(), F);
 	}
 
 	output.syntaxAnalysisOutput("条件");
@@ -1802,6 +1847,10 @@ bool SyntaxAnalysis::expression()
 	{
 		return false;
 	}
+
+	exprType = INT;
+	string functionName = callFunctionName;
+	int paraN = parameterNumber;
 
 	if (symbolCode == PLUS || symbolCode == MINU)
 	{
@@ -1819,12 +1868,15 @@ bool SyntaxAnalysis::expression()
 			break;
 		}
 
+		exprType = INT;
 		getNext();
 		if (!term())
 		{
 			return false;
 		}
 	}
+	callFunctionName = functionName;
+	parameterNumber = paraN;
 	output.syntaxAnalysisOutput("表达式");
 	return true;
 }
@@ -1843,6 +1895,7 @@ bool SyntaxAnalysis::term()
 			break;
 		}
 
+		exprType = INT;
 		getNext();
 		if (!factor())
 		{
@@ -1895,6 +1948,7 @@ bool SyntaxAnalysis::factor()
 				exprType = symbolTable.getCurrentType();
 			}
 
+			SymbolTableItemType temp = exprType;
 			if (symbolCode == LBRACK)
 			{
 				getNext();
@@ -1903,6 +1957,10 @@ bool SyntaxAnalysis::factor()
 					return false;
 				}
 
+				if (exprType != INT)
+				{
+					errorHandler.error(lexicalAnalysis.getLineCount(), I);
+				}
 				if (!hasNext)
 				{
 					return false;
@@ -1927,6 +1985,11 @@ bool SyntaxAnalysis::factor()
 						return false;
 					}
 
+					if (exprType != INT)
+					{
+						errorHandler.error(lexicalAnalysis.getLineCount(), I);
+					}
+
 					if (!hasNext)
 					{
 						return false;
@@ -1938,9 +2001,11 @@ bool SyntaxAnalysis::factor()
 						lexicalAnalysis.setAutoComplete();
 					}
 					getNext();
+					exprType = temp;
 					output.syntaxAnalysisOutput("因子", 1621);
 					return true;
 				}
+				exprType = temp;
 				output.syntaxAnalysisOutput("因子", 1624);
 				return true;
 			}
@@ -2005,10 +2070,9 @@ bool SyntaxAnalysis::callFunction()
 	{
 		return false;
 	}
-	string domain = currentDomain;
 
 	currentIdentifier = lexicalAnalysis.getToken();
-	currentDomain = currentIdentifier;
+	callFunctionName = currentIdentifier;
 
 	bool hasFunction = symbolTable.hasFunction(currentIdentifier);
 	if (!hasFunction)
@@ -2050,7 +2114,6 @@ bool SyntaxAnalysis::callFunction()
 	{
 		output.syntaxAnalysisOutput("无返回值函数调用语句");
 	}
-	currentDomain = domain;
 	return true;
 }
 
@@ -2071,14 +2134,19 @@ bool SyntaxAnalysis::parameterValueTable()
 		return true;
 	}
 
-	bool hasPara = symbolTable.findParameter(currentDomain);
+	bool hasPara = symbolTable.findParameter(callFunctionName);
 	SymbolTableItemType paraType = symbolTable.getCurrentType();
 
 	if (!expression())
 	{
-		return false;
+		output.syntaxAnalysisOutput("值参数表");
+		return true;
 	}
 
+	if (hasPara && paraType != exprType)
+	{
+		errorHandler.error(lexicalAnalysis.getLineCount(), E);
+	}
 	parameterNumber++;
 
 	while (true)
@@ -2088,10 +2156,16 @@ bool SyntaxAnalysis::parameterValueTable()
 			break;
 		}
 
+		hasPara = symbolTable.nextParameter(callFunctionName);
+		paraType = symbolTable.getCurrentType();
 		getNext();
 		if (!expression())
 		{
 			return false;
+		}
+		if (hasPara && paraType != exprType)
+		{
+			errorHandler.error(lexicalAnalysis.getLineCount(), E);
 		}
 		parameterNumber++;
 	}
@@ -2130,6 +2204,11 @@ bool SyntaxAnalysis::assignStatement()
 		{
 			return false;
 		}
+
+		if (exprType != INT)
+		{
+			errorHandler.error(lexicalAnalysis.getLineCount(), I);
+		}
 		if (!hasNext || symbolCode != RBRACK)
 		{
 			errorHandler.error(lexicalAnalysis.getLineCount(), M);
@@ -2144,6 +2223,12 @@ bool SyntaxAnalysis::assignStatement()
 			{
 				return false;
 			}
+
+			if (exprType != INT)
+			{
+				errorHandler.error(lexicalAnalysis.getLineCount(), I);
+			}
+
 			if (!hasNext || symbolCode != RBRACK)
 			{
 				errorHandler.error(lexicalAnalysis.getLineCount(), M);
@@ -2355,7 +2440,6 @@ bool SyntaxAnalysis::switchStatement()
 	if (!defaultStatement())
 	{
 		errorHandler.error(lexicalAnalysis.getLineCount(), P);
-		return false;
 	}
 
 	if (!hasNext || symbolCode != RBRACE)
@@ -2371,13 +2455,14 @@ bool SyntaxAnalysis::switchStatement()
 /*＜情况表＞   ::=  ＜情况子语句＞{＜情况子语句＞} */
 bool SyntaxAnalysis::caseTable()
 {
-	if (!caseStatement())
+	SymbolTableItemType temp = exprType;
+	if (!caseStatement(temp))
 	{
 		return false;
 	}
 	while (true)
 	{
-		if (!caseStatement())
+		if (!caseStatement(temp))
 		{
 			break;
 		}
@@ -2388,7 +2473,7 @@ bool SyntaxAnalysis::caseTable()
 }
 
 /*＜情况子语句＞  ::=  case＜常量＞：＜语句＞ */
-bool SyntaxAnalysis::caseStatement()
+bool SyntaxAnalysis::caseStatement(SymbolTableItemType type)
 {
 	if (!hasNext || symbolCode != CASETK)
 	{
@@ -2396,9 +2481,19 @@ bool SyntaxAnalysis::caseStatement()
 	}
 
 	getNext();
-	if (!constant())
+
+	SymbolTableItemType constType = constant();
+
+	if (constType == VOID)
 	{
 		return false;
+	}
+	else
+	{
+		if (type != constType)
+		{
+			errorHandler.error(lexicalAnalysis.getLineCount(), O);
+		}
 	}
 
 	if (!hasNext || symbolCode != COLON)
@@ -2448,6 +2543,7 @@ bool SyntaxAnalysis::returnStatement()
 		return false;
 	}
 
+	SymbolTableItemType temp = VOID;
 	getNext();
 	if (symbolCode == LPARENT)
 	{
@@ -2455,6 +2551,20 @@ bool SyntaxAnalysis::returnStatement()
 		if (!expression())
 		{
 			return false;
+		}
+		
+		if (needRet)
+		{
+			temp = exprType;
+			SymbolTableItemType functionType = symbolTable.getFunctionType(currentDomain);
+			if (temp != functionType)
+			{
+				errorHandler.error(lexicalAnalysis.getLineCount(), H);
+			}
+		}
+		else
+		{
+			errorHandler.error(lexicalAnalysis.getLineCount(), G);
 		}
 
 		if (!hasNext || symbolCode != RPARENT)
@@ -2464,10 +2574,16 @@ bool SyntaxAnalysis::returnStatement()
 		}
 
 		getNext();
+		retStatement = true;
 		output.syntaxAnalysisOutput("返回语句");
 		return true;
 	}
 
+	if (needRet)
+	{
+		errorHandler.error(lexicalAnalysis.getLineCount(), H);
+	}
+	retStatement = true;
 	output.syntaxAnalysisOutput("返回语句");
 	return true;
 }
