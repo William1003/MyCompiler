@@ -14,8 +14,17 @@ SyntaxAnalysis::SyntaxAnalysis(ErrorHandler& errorHandler, LexicalAnalysis& lexi
 
 void SyntaxAnalysis::getNext()
 {
+	int line = lexicalAnalysis.getLineCount();
 	hasNext = lexicalAnalysis.getNextSymbol();
 	symbolCode = lexicalAnalysis.getSymbolCode();
+	if (line != lexicalAnalysis.getLineCount())
+	{
+		errorLine = line;
+	}
+	else
+	{
+		errorLine = lexicalAnalysis.getLineCount();
+	}
 }
 
 void SyntaxAnalysis::backup(int line)
@@ -125,7 +134,7 @@ bool SyntaxAnalysis::mainFunction()
 	getNext();
 	if (!hasNext || symbolCode != RPARENT)
 	{
-		errorHandler.error(lexicalAnalysis.getLineCount(), L);
+		errorHandler.error(errorLine, L);
 		lexicalAnalysis.setAutoComplete();
 	}
 
@@ -187,7 +196,7 @@ bool SyntaxAnalysis::constDeclaration()
 	// 缺失分号, 自动补全, 继续分析
 	if (symbolCode != SEMICN)
 	{
-		errorHandler.error(lexicalAnalysis.getLineCount(), K);
+		errorHandler.error(errorLine, K);
 		lexicalAnalysis.setAutoComplete();
 	}
 
@@ -215,7 +224,7 @@ bool SyntaxAnalysis::constDeclaration()
 		}
 		if (symbolCode != SEMICN)
 		{
-			errorHandler.error(lexicalAnalysis.getLineCount(), K);
+			errorHandler.error(errorLine, K);
 			lexicalAnalysis.setAutoComplete();
 		}
 
@@ -444,7 +453,7 @@ bool SyntaxAnalysis::varDeclaration()
 
 	if (symbolCode != SEMICN)
 	{
-		errorHandler.error(lexicalAnalysis.getLineCount(), K);
+		errorHandler.error(errorLine, K);
 		lexicalAnalysis.setAutoComplete();
 	}
 
@@ -479,7 +488,7 @@ bool SyntaxAnalysis::varDeclaration()
 
 		if (symbolCode != SEMICN)
 		{
-			errorHandler.error(lexicalAnalysis.getLineCount(), K);
+			errorHandler.error(errorLine, K);
 			lexicalAnalysis.setAutoComplete();
 		}
 
@@ -571,7 +580,7 @@ bool SyntaxAnalysis::varWithoutInit()
 		}
 		if (symbolCode != RBRACK)
 		{
-			errorHandler.error(lexicalAnalysis.getLineCount(), M);
+			errorHandler.error(errorLine, M);
 			lexicalAnalysis.setAutoComplete();
 		}
 
@@ -611,7 +620,7 @@ bool SyntaxAnalysis::varWithoutInit()
 			}
 			if (symbolCode != RBRACK)
 			{
-				errorHandler.error(lexicalAnalysis.getLineCount(), M);
+				errorHandler.error(errorLine, M);
 				lexicalAnalysis.setAutoComplete();
 			}
 
@@ -699,7 +708,7 @@ bool SyntaxAnalysis::varWithoutInit()
 		}
 		if (symbolCode != RBRACK)
 		{
-			errorHandler.error(lexicalAnalysis.getLineCount(), M);
+			errorHandler.error(errorLine, M);
 			lexicalAnalysis.setAutoComplete();
 		}
 
@@ -745,7 +754,7 @@ bool SyntaxAnalysis::varWithoutInit()
 		}
 		if (symbolCode != RBRACK)
 		{
-			errorHandler.error(lexicalAnalysis.getLineCount(), M);
+			errorHandler.error(errorLine, M);
 			lexicalAnalysis.setAutoComplete();
 		}
 
@@ -815,7 +824,7 @@ bool SyntaxAnalysis::varWithInit()
 		}
 		if (symbolCode != RBRACK)
 		{
-			errorHandler.error(lexicalAnalysis.getLineCount(), M);
+			errorHandler.error(errorLine, M);
 			lexicalAnalysis.setAutoComplete();
 		}
 
@@ -847,7 +856,7 @@ bool SyntaxAnalysis::varWithInit()
 			}
 			if (symbolCode != RBRACK)
 			{
-				errorHandler.error(lexicalAnalysis.getLineCount(), M);
+				errorHandler.error(errorLine, M);
 				lexicalAnalysis.setAutoComplete();
 			}
 
@@ -1234,7 +1243,7 @@ bool SyntaxAnalysis::functionWithRet()
 	}
 	if (symbolCode != RPARENT)
 	{
-		errorHandler.error(lexicalAnalysis.getLineCount(), L);
+		errorHandler.error(errorLine, L);
 		lexicalAnalysis.setAutoComplete();
 	}
 
@@ -1436,7 +1445,7 @@ bool SyntaxAnalysis::functionWithoutRet()
 
 	if (!hasNext || symbolCode != RPARENT)
 	{
-		errorHandler.error(lexicalAnalysis.getLineCount(), L);
+		errorHandler.error(errorLine, L);
 		lexicalAnalysis.setAutoComplete();
 	}
 
@@ -1469,11 +1478,6 @@ bool SyntaxAnalysis::functionWithoutRet()
 /*＜语句列＞   ::= ｛＜语句＞｝*/
 bool SyntaxAnalysis::statementQueue()
 {
-	if (!hasNext)
-	{
-		return false;
-	}
-
 	while (true)
 	{
 		if (!statement())
@@ -1498,7 +1502,7 @@ bool SyntaxAnalysis::statement()
 		{
 			if (!hasNext || symbolCode != SEMICN)
 			{
-				errorHandler.error(lexicalAnalysis.getLineCount(), K);
+				errorHandler.error(errorLine, K);
 				lexicalAnalysis.setAutoComplete();
 			}
 			getNext();
@@ -1510,7 +1514,7 @@ bool SyntaxAnalysis::statement()
 		{
 			if (!hasNext || symbolCode != SEMICN)
 			{
-				errorHandler.error(lexicalAnalysis.getLineCount(), K);
+				errorHandler.error(errorLine, K);
 				lexicalAnalysis.setAutoComplete();
 			}
 			getNext();
@@ -1543,7 +1547,7 @@ bool SyntaxAnalysis::statement()
 		retStatement = true;
 		if (symbolCode != SEMICN)
 		{
-			errorHandler.error(lexicalAnalysis.getLineCount(), K);
+			errorHandler.error(errorLine, K);
 			lexicalAnalysis.setAutoComplete();
 		}
 		getNext();
@@ -1555,7 +1559,7 @@ bool SyntaxAnalysis::statement()
 	{
 		if (symbolCode != SEMICN)
 		{
-			errorHandler.error(lexicalAnalysis.getLineCount(), K);
+			errorHandler.error(errorLine, K);
 			lexicalAnalysis.setAutoComplete();
 		}
 		getNext();
@@ -1567,7 +1571,7 @@ bool SyntaxAnalysis::statement()
 	{
 		if (symbolCode != SEMICN)
 		{
-			errorHandler.error(lexicalAnalysis.getLineCount(), K);
+			errorHandler.error(errorLine, K);
 			lexicalAnalysis.setAutoComplete();
 		}
 		getNext();
@@ -1627,7 +1631,7 @@ bool SyntaxAnalysis::loopStatement()
 
 		if (!hasNext || symbolCode != RPARENT)
 		{
-			errorHandler.error(lexicalAnalysis.getLineCount(), L);
+			errorHandler.error(errorLine, L);
 			lexicalAnalysis.setAutoComplete();
 		}
 
@@ -1674,7 +1678,7 @@ bool SyntaxAnalysis::loopStatement()
 
 		if (!hasNext || symbolCode != SEMICN)
 		{
-			errorHandler.error(lexicalAnalysis.getLineCount(), K);
+			errorHandler.error(errorLine, K);
 			lexicalAnalysis.setAutoComplete();
 		}
 
@@ -1736,7 +1740,7 @@ bool SyntaxAnalysis::loopStatement()
 
 		if (!hasNext || symbolCode != RPARENT)
 		{
-			errorHandler.error(lexicalAnalysis.getLineCount(), L);
+			errorHandler.error(errorLine, L);
 			lexicalAnalysis.setAutoComplete();
 		}
 
@@ -1787,7 +1791,7 @@ bool SyntaxAnalysis::ifStatement()
 
 	if (!hasNext || symbolCode != RPARENT)
 	{
-		errorHandler.error(lexicalAnalysis.getLineCount(), L);
+		errorHandler.error(errorLine, L);
 		lexicalAnalysis.setAutoComplete();
 	}
 
@@ -1852,6 +1856,8 @@ bool SyntaxAnalysis::expression()
 	string functionName = callFunctionName;
 	int paraN = parameterNumber;
 
+	bool flag = false;
+
 	if (symbolCode == PLUS || symbolCode == MINU)
 	{
 		getNext();
@@ -1865,9 +1871,14 @@ bool SyntaxAnalysis::expression()
 	{
 		if (symbolCode != PLUS && symbolCode != MINU)
 		{
+			if (flag)
+			{
+				exprType = INT;
+			}
 			break;
 		}
 
+		flag = true;
 		exprType = INT;
 		getNext();
 		if (!term())
@@ -1884,6 +1895,7 @@ bool SyntaxAnalysis::expression()
 /*＜项＞ ::= ＜因子＞{＜乘法运算符＞＜因子＞} */
 bool SyntaxAnalysis::term()
 {
+	bool flag = false;
 	if (!factor())
 	{
 		return false;
@@ -1892,9 +1904,14 @@ bool SyntaxAnalysis::term()
 	{
 		if (symbolCode != MULT && symbolCode != DIV)
 		{
+			if (flag)
+			{
+				exprType = INT;
+			}
 			break;
 		}
 
+		flag = true;
 		exprType = INT;
 		getNext();
 		if (!factor())
@@ -1967,7 +1984,7 @@ bool SyntaxAnalysis::factor()
 				}
 				if (symbolCode != RBRACK)
 				{
-					errorHandler.error(lexicalAnalysis.getLineCount(), M);
+					errorHandler.error(errorLine, M);
 					lexicalAnalysis.setAutoComplete();
 				}
 
@@ -1997,7 +2014,7 @@ bool SyntaxAnalysis::factor()
 
 					if (symbolCode != RBRACK)
 					{
-						errorHandler.error(lexicalAnalysis.getLineCount(), M);
+						errorHandler.error(errorLine, M);
 						lexicalAnalysis.setAutoComplete();
 					}
 					getNext();
@@ -2037,13 +2054,14 @@ bool SyntaxAnalysis::factor()
 			return false;
 		}
 		
+		exprType = INT;
 		if (!hasNext)
 		{
 			return false;
 		}
 		if (symbolCode != RPARENT)
 		{
-			errorHandler.error(lexicalAnalysis.getLineCount(), L);
+			errorHandler.error(errorLine, L);
 			lexicalAnalysis.setAutoComplete();
 		}
 		
@@ -2096,7 +2114,7 @@ bool SyntaxAnalysis::callFunction()
 
 	if (!hasNext || symbolCode != RPARENT)
 	{
-		errorHandler.error(lexicalAnalysis.getLineCount(), L);
+		errorHandler.error(errorLine, L);
 		lexicalAnalysis.setAutoComplete();
 	}
 
@@ -2211,7 +2229,7 @@ bool SyntaxAnalysis::assignStatement()
 		}
 		if (!hasNext || symbolCode != RBRACK)
 		{
-			errorHandler.error(lexicalAnalysis.getLineCount(), M);
+			errorHandler.error(errorLine, M);
 			lexicalAnalysis.setAutoComplete();
 		}
 
@@ -2231,7 +2249,7 @@ bool SyntaxAnalysis::assignStatement()
 
 			if (!hasNext || symbolCode != RBRACK)
 			{
-				errorHandler.error(lexicalAnalysis.getLineCount(), M);
+				errorHandler.error(errorLine, M);
 				lexicalAnalysis.setAutoComplete();
 			}
 
@@ -2329,7 +2347,7 @@ bool SyntaxAnalysis::scanfStatement()
 	getNext();
 	if (!hasNext || symbolCode != RPARENT)
 	{
-		errorHandler.error(lexicalAnalysis.getLineCount(), L);
+		errorHandler.error(errorLine, L);
 		lexicalAnalysis.setAutoComplete();
 	}
 
@@ -2391,7 +2409,7 @@ bool SyntaxAnalysis::printfStatement()
 
 	if (symbolCode != RPARENT)
 	{
-		errorHandler.error(lexicalAnalysis.getLineCount(), L);
+		errorHandler.error(errorLine, L);
 		lexicalAnalysis.setAutoComplete();
 	}
 
@@ -2422,7 +2440,7 @@ bool SyntaxAnalysis::switchStatement()
 
 	if (!hasNext || symbolCode != RPARENT)
 	{
-		errorHandler.error(lexicalAnalysis.getLineCount(), L);
+		errorHandler.error(errorLine, L);
 		lexicalAnalysis.setAutoComplete();
 	}
 
@@ -2569,7 +2587,7 @@ bool SyntaxAnalysis::returnStatement()
 
 		if (!hasNext || symbolCode != RPARENT)
 		{
-			errorHandler.error(lexicalAnalysis.getLineCount(), L);
+			errorHandler.error(errorLine, L);
 			lexicalAnalysis.setAutoComplete();
 		}
 

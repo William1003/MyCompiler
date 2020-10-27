@@ -27,6 +27,7 @@ private:
 	bool needRet = false;
 	bool retStatement = false;
 	string callFunctionName;
+	int errorLine;
 
 public:
 	SyntaxAnalysis(ErrorHandler& errorHandler, LexicalAnalysis& lexicalAnalysis, Output& output, SymbolTable& table);
