@@ -144,6 +144,7 @@
     <ClInclude Include="src\constValue.h" />
     <ClInclude Include="src\ErrorHandler.h" />
     <ClInclude Include="src\globalMacro.h" />
+    <ClInclude Include="src\TempCode.h" />
     <ClInclude Include="src\LexicalAnalysis.h" />
     <ClInclude Include="src\Output.h" />
     <ClInclude Include="src\SymbolTable.h" />

@@ -19,7 +19,7 @@ int main()
 	SymbolTable table;
 	SyntaxAnalysis syntaxAnalysis(errorHandler, lexicalAnalysis, myOutput, table);
 	syntaxAnalysis.startSyntaxAnalysis();
-	myOutput.outputToFile();
+	// myOutput.outputToFile();
 	table.output();
 	return 0;
 }

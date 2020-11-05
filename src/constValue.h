@@ -7,6 +7,11 @@
 #define TYPE_NUM 3
 #define KIND_NUM 5
 
+extern const char* SymbolName[SYMBOL_NUM];
+extern const char* ErrorContent[ERROR_NUM];
+extern const char* ItemType[TYPE_NUM];
+extern const char* ItemKind[KIND_NUM];
+
 enum SymbolCode
 {
  IDENFR, 	// 标识符

@@ -77,17 +77,18 @@ bool SyntaxAnalysis::program()
 			break;
 		}
 
-		backup(67);
+		lexicalAnalysis.backup();
 
 		if (symbolCode == VOIDTK)
 		{
-			getNext();
-			if (hasNext && symbolCode == MAINTK)
+			SymbolCode temp = lexicalAnalysis.preRead();
+			// getNext();
+			if (temp == MAINTK)
 			{
-				retract(80);
+				lexicalAnalysis.restore();
 				break;
 			}
-			retract(83);
+			lexicalAnalysis.restore();
 			if (!functionWithoutRet())
 			{
 				return false;
@@ -426,24 +427,26 @@ bool SyntaxAnalysis::varDeclaration()
 		return false;
 	}
 
-	backup(380);
+	lexicalAnalysis.backup();
 
 	if (currentDomain == "0")
 	{
 		if (symbolCode == CHARTK || symbolCode == INTTK)
 		{
-			getNext();
-			if (hasNext && symbolCode == IDENFR)
+			// getNext();
+			SymbolCode temp = lexicalAnalysis.preRead();
+			if (temp == IDENFR)
 			{
-				getNext();
-				if (hasNext && symbolCode == LPARENT)
+				// getNext();
+				temp = lexicalAnalysis.preRead();
+				if (temp == LPARENT)
 				{
-					retract(392);
+					lexicalAnalysis.restore();
 					return false;
 				}
 			}
 		}
-		retract(397);
+		lexicalAnalysis.restore();
 	}
 
 	if (!varDefinition())
@@ -461,24 +464,29 @@ bool SyntaxAnalysis::varDeclaration()
 
 	while (true)
 	{
-		backup(415);
+		// backup(415);
+		lexicalAnalysis.backup();
 
 		if (currentDomain == "0")
 		{
 			if (symbolCode == CHARTK || symbolCode == INTTK)
 			{
-				getNext();
-				if (hasNext && symbolCode == IDENFR)
+				SymbolCode temp = lexicalAnalysis.preRead();
+				// getNext();
+				if (temp == IDENFR)
 				{
-					getNext();
-					if (hasNext && symbolCode == LPARENT)
+					temp = lexicalAnalysis.preRead();
+					// getNext();
+					if (temp == LPARENT)
 					{
-						retract(427);
+						// retract(427);
+						lexicalAnalysis.restore();
 						break;
 					}
 				}
 			}
-			retract(432);
+			// retract(432);
+			lexicalAnalysis.restore();
 		}
 
 		if (!hasNext || !varDefinition())
@@ -502,15 +510,38 @@ bool SyntaxAnalysis::varDeclaration()
 /*＜变量定义＞ ::= ＜变量定义无初始化＞|＜变量定义及初始化＞ */
 bool SyntaxAnalysis::varDefinition()
 {
-	backup(456);
-	if (!varWithInit())
+	bool assign = false;
+	// backup(456);
+	lexicalAnalysis.backup();
+	for (int i = 0; i < 8; i++)
 	{
-		retract(459);
+		SymbolCode temp = lexicalAnalysis.preRead();
+		if (temp == SEMICN)
+		{
+			break;
+		}
+		if (temp == ASSIGN)
+		{
+			assign = true;
+			break;
+		}
+	}
+	lexicalAnalysis.restore();
+	if (assign)
+	{
+		if (!varWithInit())
+		{
+			return false;
+		}
+	}
+	else
+	{
 		if (!varWithoutInit())
 		{
 			return false;
 		}
 	}
+
 	output.syntaxAnalysisOutput("变量定义");
 	return true;
 }
@@ -1497,20 +1528,28 @@ bool SyntaxAnalysis::statement()
 	//先处理有冲突的函数调用与赋值语句
 	if (symbolCode == IDENFR)
 	{
-		backup(1199);
-		if (assignStatement())
+		// backup(1199);
+		lexicalAnalysis.backup();
+		SymbolCode temp = lexicalAnalysis.preRead();
+		if (temp == LPARENT)
 		{
-			if (!hasNext || symbolCode != SEMICN)
+			lexicalAnalysis.restore();
+			if (callFunction())
 			{
-				errorHandler.error(errorLine, K);
-				lexicalAnalysis.setAutoComplete();
+				if (!hasNext || symbolCode != SEMICN)
+				{
+					errorHandler.error(errorLine, K);
+					lexicalAnalysis.setAutoComplete();
+				}
+				getNext();
+				output.syntaxAnalysisOutput("语句");
+				return true;
 			}
-			getNext();
-			output.syntaxAnalysisOutput("语句");
-			return true;
+			return false;
 		}
-		retract(1210);
-		if (callFunction())
+		// retract(1210);
+		lexicalAnalysis.restore();
+		if (assignStatement())
 		{
 			if (!hasNext || symbolCode != SEMICN)
 			{
@@ -1933,67 +1972,42 @@ bool SyntaxAnalysis::factor()
 		return false;
 	}
 
-	backup(1572);	
+	lexicalAnalysis.backup();
 
 	//特殊判断, 是不是函数?
 	if (symbolCode == IDENFR)
 	{
-		currentIdentifier = lexicalAnalysis.getToken();
-		getNext();
-		if (!hasNext)
+		if (lexicalAnalysis.preRead() != LPARENT)
 		{
-			if (!symbolTable.hasItem(currentIdentifier, currentDomain))
+			lexicalAnalysis.restore();
+			currentIdentifier = lexicalAnalysis.getToken();
+			getNext();
+			if (!hasNext)
 			{
-				errorHandler.error(lexicalAnalysis.getLineCount(), C);
-			}
-			else
-			{
-				exprType = symbolTable.getCurrentType();
-			}
-			output.syntaxAnalysisOutput("因子", 1574);
-			return true;
-		}
-
-		if (symbolCode != LPARENT)
-		{
-			if (!symbolTable.hasItem(currentIdentifier, currentDomain))
-			{
-				errorHandler.error(lexicalAnalysis.getLineCount(), C);
-			}
-			else
-			{
-				exprType = symbolTable.getCurrentType();
+				if (!symbolTable.hasItem(currentIdentifier, currentDomain))
+				{
+					errorHandler.error(lexicalAnalysis.getLineCount(), C);
+				}
+				else
+				{
+					exprType = symbolTable.getCurrentType();
+				}
+				output.syntaxAnalysisOutput("因子");
+				return true;
 			}
 
-			SymbolTableItemType temp = exprType;
-			if (symbolCode == LBRACK)
+			if (symbolCode != LPARENT)
 			{
-				getNext();
-				if (!expression())
+				if (!symbolTable.hasItem(currentIdentifier, currentDomain))
 				{
-					return false;
+					errorHandler.error(lexicalAnalysis.getLineCount(), C);
+				}
+				else
+				{
+					exprType = symbolTable.getCurrentType();
 				}
 
-				if (exprType != INT)
-				{
-					errorHandler.error(lexicalAnalysis.getLineCount(), I);
-				}
-				if (!hasNext)
-				{
-					return false;
-				}
-				if (symbolCode != RBRACK)
-				{
-					errorHandler.error(errorLine, M);
-					lexicalAnalysis.setAutoComplete();
-				}
-
-				getNext();
-				if (!hasNext)
-				{
-					return true;
-				}
-
+				SymbolTableItemType temp = exprType;
 				if (symbolCode == LBRACK)
 				{
 					getNext();
@@ -2006,32 +2020,62 @@ bool SyntaxAnalysis::factor()
 					{
 						errorHandler.error(lexicalAnalysis.getLineCount(), I);
 					}
-
 					if (!hasNext)
 					{
 						return false;
 					}
-
 					if (symbolCode != RBRACK)
 					{
 						errorHandler.error(errorLine, M);
 						lexicalAnalysis.setAutoComplete();
 					}
+
 					getNext();
+					if (!hasNext)
+					{
+						return true;
+					}
+
+					if (symbolCode == LBRACK)
+					{
+						getNext();
+						if (!expression())
+						{
+							return false;
+						}
+
+						if (exprType != INT)
+						{
+							errorHandler.error(lexicalAnalysis.getLineCount(), I);
+						}
+
+						if (!hasNext)
+						{
+							return false;
+						}
+
+						if (symbolCode != RBRACK)
+						{
+							errorHandler.error(errorLine, M);
+							lexicalAnalysis.setAutoComplete();
+						}
+						getNext();
+						exprType = temp;
+						output.syntaxAnalysisOutput("因子");
+						return true;
+					}
 					exprType = temp;
-					output.syntaxAnalysisOutput("因子", 1621);
+					output.syntaxAnalysisOutput("因子");
 					return true;
 				}
-				exprType = temp;
-				output.syntaxAnalysisOutput("因子", 1624);
+				output.syntaxAnalysisOutput("因子");
 				return true;
 			}
-			output.syntaxAnalysisOutput("因子", 1628);
-			return true;
 		}
 		else
 		{
-			retract(1638);
+			lexicalAnalysis.restore();
+			currentIdentifier = lexicalAnalysis.getToken();
 			SymbolTableItemType temp = symbolTable.getFunctionType(currentIdentifier);
 			if (callFunction())
 			{
@@ -2039,7 +2083,7 @@ bool SyntaxAnalysis::factor()
 				{
 					exprType = temp;
 				}
-				output.syntaxAnalysisOutput("因子", 1636);
+				output.syntaxAnalysisOutput("因子");
 				return true;
 			}
 			return false;
@@ -2066,12 +2110,12 @@ bool SyntaxAnalysis::factor()
 		}
 		
 		getNext();
-		output.syntaxAnalysisOutput("因子", 1660);
+		output.syntaxAnalysisOutput("因子");
 		return true;
 	}
 	if (integer() || character())
 	{
-		output.syntaxAnalysisOutput("因子", 1665);
+		output.syntaxAnalysisOutput("因子");
 		return true;
 	}
 
@@ -2124,7 +2168,7 @@ bool SyntaxAnalysis::callFunction()
 	}
 
 	getNext();
-	if (symbolTable.hasRet(currentDomain))
+	if (symbolTable.hasRet(callFunctionName))
 	{
 		output.syntaxAnalysisOutput("有返回值函数调用语句");
 	}
@@ -2391,7 +2435,7 @@ bool SyntaxAnalysis::printfStatement()
 				return false;
 			}
 			getNext();
-			output.syntaxAnalysisOutput("写语句", 1909);
+			output.syntaxAnalysisOutput("写语句");
 			return true;
 		}
 		if (symbolCode != RPARENT)
@@ -2399,7 +2443,7 @@ bool SyntaxAnalysis::printfStatement()
 			return false;
 		}
 		getNext();
-		output.syntaxAnalysisOutput("写语句", 1917);
+		output.syntaxAnalysisOutput("写语句");
 		return true;
 	}
 	if (!expression())
@@ -2414,7 +2458,7 @@ bool SyntaxAnalysis::printfStatement()
 	}
 
 	getNext();
-	output.syntaxAnalysisOutput("写语句", 1924);
+	output.syntaxAnalysisOutput("写语句");
 	return true;
 }
 

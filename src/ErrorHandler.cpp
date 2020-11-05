@@ -1,9 +1,8 @@
 #include"ErrorHandler.h"
 #include<iostream>
+#include"constValue.h"
 
 using namespace std;
-
-extern const char* ErrorContent[ERROR_NUM];
 
 ErrorHandler::ErrorHandler()
 {

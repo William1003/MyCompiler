@@ -1,10 +1,9 @@
 #include"Output.h"
 #include<cstdlib>
 #include<iostream>
+#include"constValue.h"
 
 using namespace std;
-
-extern const char* SymbolName[SYMBOL_NUM];
 
 Output::Output(string& ofname)
 {
@@ -19,31 +18,23 @@ Output::Output(string& ofname)
 
 void Output::lexicalAnalysisOutput(SymbolCode symbolCode, string token)
 {
-	outputContent += SymbolName[symbolCode];
-	outputContent += " ";
-	outputContent += token;
-	outputContent += "\n";
+	//outputContent += SymbolName[symbolCode];
+	//outputContent += " ";
+	//outputContent += token;
+	//outputContent += "\n";
+	out << SymbolName[symbolCode] << " " << token << endl;
 	debugFile << SymbolName[symbolCode] << " " << token << endl;
 }
 
 void Output::syntaxAnalysisOutput(string syntaxName)
 {
-	outputContent += "<";
-	outputContent += syntaxName;
-	outputContent += ">";
-	outputContent += "\n";
+	//outputContent += "<";
+	//outputContent += syntaxName;
+	//outputContent += ">";
+	//outputContent += "\n";
+	out << "<" << syntaxName << ">" << endl;
 	debugFile << "<" << syntaxName << ">" << endl;
 }
-
-void Output::syntaxAnalysisOutput(string syntaxName, int line)
-{
-	outputContent += "<";
-	outputContent += syntaxName;
-	outputContent += ">";
-	outputContent += "\n";
-	debugFile << "<" << syntaxName << "> @line " << line << endl;
-}
-
 
 void Output::backup()
 {

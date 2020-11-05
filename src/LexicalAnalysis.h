@@ -25,7 +25,7 @@ private:
 	bool autoComplete;
 	int value;
 	Output& output;
-	enum SymbolCode reserver();			//查保留字
+	enum SymbolCode reserver(string& token);			//查保留字
 	void getChar();			//读下一个字符
 	void retract();			//回退一个字符
 	ErrorHandler& errorHandler;
@@ -46,6 +46,7 @@ public:
 	void backup();
 	void restore();
 	bool isCharacter();
+	SymbolCode preRead();
 };
 
 #endif

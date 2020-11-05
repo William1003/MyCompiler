@@ -79,7 +79,7 @@ int LexicalAnalysis::getLineCount()
 	return line;
 }
 
-SymbolCode LexicalAnalysis::reserver() {
+SymbolCode LexicalAnalysis::reserver(string& token) {
 	string str = token;
 	transform(str.begin(), str.end(), str.begin(), ::tolower);
 	if (str == "if") 
@@ -194,7 +194,7 @@ bool LexicalAnalysis::getNextSymbol()
 			retract(); // 回退一个字符
 		}
 		// cout << token << endl;
-		symbolCode = reserver();
+		symbolCode = reserver(token);
 		//Word word(token, code);
 	}
 
@@ -455,4 +455,207 @@ bool LexicalAnalysis::isCharacter()
 		return true;
 	}
 	return false;
+}
+
+SymbolCode LexicalAnalysis::preRead()
+{
+	string s;
+	s.clear();
+	//清空token，读取第一个字符
+	getChar();
+
+	//跳过空白符
+	while (isspace(c))
+	{
+		getChar();
+		//文件末尾全是空白符，返回
+	}
+
+	//判断是不是字母
+	if (isLetter(c))
+	{
+		//将字符拼接成字符串
+		while (isLetter(c) || isDigit(c))
+		{
+			s += c;
+			getChar();
+			//如果读到末尾，跳出循环
+			if (finish)
+			{
+				break;
+			}
+		}
+		//如果到末尾，不回退
+		if (!finish)
+		{
+			retract(); // 回退一个字符
+		}
+		// cout << token << endl;
+		return reserver(s);
+		//Word word(token, code);
+	}
+
+	//判断数字常量
+	else if (isDigit(c))
+	{
+		while (isDigit(c))
+		{
+			s += c;
+			getChar();
+			if (finish)
+			{
+				break;
+			}
+		}
+		if (!finish)
+		{
+			retract();
+		}
+		// cout << x << endl;
+		return INTCON;
+	}
+
+	// +
+	else if (isPlus(c))
+	{
+		return PLUS;
+	}
+
+	// -
+	else if (isMinus(c))
+	{
+		return MINU;
+	}
+
+	// *
+	else if (isStar(c))
+	{
+		return MULT;
+	}
+
+	// '/'
+	// TODO: 注释？
+	else if (isDivi(c))
+	{
+		return DIV;
+	}
+
+	// :
+	else if (isColon(c))
+	{
+		return COLON;
+	}
+
+	// ;
+	else if (isSemi(c))
+	{
+		return SEMICN;
+	}
+
+	// ,
+	else if (isComma(c))
+	{
+		return COMMA;
+	}
+
+	else if (isLt(c))
+	{
+		// TODO: 错误处理？读完到末尾 好像不用？
+		getChar();
+		if (isEqu(c))
+		{
+			return LEQ;
+		}
+		else
+		{
+			retract();
+			return LSS;
+		}
+
+	}
+
+	else if (isGt(c))
+	{
+		getChar();
+		if (isEqu(c))
+		{
+			return GEQ;
+		}
+		else
+		{
+			retract();
+			return GRE;
+		}
+	}
+
+	else if (isEqu(c))
+	{
+		getChar();
+		if (isEqu(c))
+		{
+			return EQL;
+		}
+		else
+		{
+			retract();
+			return ASSIGN;
+		}
+	}
+
+	else if (isExclamation(c))
+	{
+		getChar();
+		if (isEqu(c))
+		{
+			return NEQ;
+		}
+	}
+
+	// TODO: 引号不匹配？？
+	// 空字符？
+	else if (isSingleq(c))
+	{
+		getChar();
+		while (!isSingleq(c))
+		{
+			getChar();
+		}
+		return CHARCON;
+	}
+
+	else if (isDoubleq(c))
+	{
+		getChar();
+		while (!isDoubleq(c))
+		{
+			getChar();
+		}
+		return STRCON;
+	}
+
+	// TODO: 括号匹配
+	else if (isLpar(c))
+	{
+		return LPARENT;
+	}
+	else if (isRpar(c))
+	{
+		return RPARENT;
+	}
+	else if (isLbrack(c))
+	{
+		return LBRACK;
+	}
+	else if (isRbrack(c))
+	{
+		return RBRACK;
+	}
+	else if (isLbrace(c))
+	{
+		return LBRACE;
+	}
+	else if (isRbrace(c))
+	{
+		return RBRACE;
+	}
 }

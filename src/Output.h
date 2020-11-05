@@ -17,9 +17,13 @@ private:
 
 public:
 	Output(string& ofname);
+	~Output()
+	{
+		out.close();
+		debugFile.close();
+	}
 	void lexicalAnalysisOutput(SymbolCode symbolCode, string token);
 	void syntaxAnalysisOutput(string syntaxName);
-	void syntaxAnalysisOutput(string syntaxName, int line);
 	void backup();
 	void backup(int line);
 
