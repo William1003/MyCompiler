@@ -609,6 +609,7 @@ SymbolCode LexicalAnalysis::preRead()
 		{
 			return NEQ;
 		}
+		return NEQ;
 	}
 
 	// TODO: 引号不匹配？？
@@ -658,4 +659,5 @@ SymbolCode LexicalAnalysis::preRead()
 	{
 		return RBRACE;
 	}
+	return IDENFR;
 }

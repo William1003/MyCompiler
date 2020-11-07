@@ -75,4 +75,26 @@ enum ErrorCode
 {
 	A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P
 };
+
+namespace quaternion
+{
+	enum QuaternionOpType
+	{
+		ADD,
+		SUB,
+		MULT,
+		DIV,
+		CONSTINT,
+		CONSTCHAR,
+		VARINT,
+		VARCHAR,
+		READINT,
+		READCHAR,
+		PRINTS,
+		PRINTVAR,
+		PRINTSV,
+		ASSIGN
+	};
+}
+
 #endif // !_CONST_VALUE_H_

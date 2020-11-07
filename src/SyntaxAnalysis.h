@@ -4,6 +4,7 @@
 #include"LexicalAnalysis.h"
 #include"ErrorHandler.h"
 #include"SymbolTable.h"
+#include"TempCode.h"
 
 class SyntaxAnalysis
 {
@@ -28,9 +29,11 @@ private:
 	bool retStatement = false;
 	string callFunctionName;
 	int errorLine;
+	TempCode& tempCode;
+	string token;
 
 public:
-	SyntaxAnalysis(ErrorHandler& errorHandler, LexicalAnalysis& lexicalAnalysis, Output& output, SymbolTable& table);
+	SyntaxAnalysis(ErrorHandler& errorHandler, LexicalAnalysis& lexicalAnalysis, Output& output, SymbolTable& table, TempCode& tempCode);
 	void doLexicalAnalysis();
 	void startSyntaxAnalysis();
 
