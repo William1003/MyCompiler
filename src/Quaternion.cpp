@@ -6,7 +6,7 @@ string Quaternion::toString()
 	switch (op)
 	{
 	case quaternion::ADD:
-		s = dest + " = " + oper1 + "  +" + oper2;
+		s = dest + " = " + oper1 + " + " + oper2;
 		break;
 	case quaternion::SUB:
 		s = dest + "  =" + oper1 + " - " + oper2;
@@ -61,7 +61,7 @@ string Quaternion::toString()
 	case quaternion::ASSIGN:
 		s = "assign " + oper1 + " = " + oper2;
 		break;
-	case quaternion::FUNCTIONDEF:
+	case quaternion::FUNCTION:
 		s = "function " + oper1 + " " + oper2;
 		break;
 	default:

@@ -1,14 +1,16 @@
 #include"TempCode.h"
 
-TempCode::TempCode()
+TempCode::TempCode(SymbolTable& symbolTable) : symbolTable(symbolTable)
 {
 	tempCode.open("tempCode.txt");
 }
 
-string TempCode::genTempVar()
+string TempCode::genTempVar(string domain)
 {
 	static int n = 0;
-	return "#T" + to_string(n++);
+	string name = "#T" + to_string(n++);
+	symbolTable.push(SymbolTableItem(name, domain, VAR, INT));
+	return name;
 }
 
 void TempCode::outputToFile()

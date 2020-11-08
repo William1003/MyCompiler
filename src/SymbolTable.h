@@ -12,7 +12,6 @@ private:
 	int count = 0;
 	ofstream symbolTableFile;
 	int index = 0;
-	map<string, int> addrCount;
 
 public:
 	SymbolTable();
@@ -31,6 +30,7 @@ public:
 	bool nextParameter(string functionName);
 	vector<SymbolTableItem> table;
 	SymbolTableItem getItem(string name, string domain);
+	map<string, int> addrCount;
 };
 
 #endif // !_SYMBOL_TABLE_H_

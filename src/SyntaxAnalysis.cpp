@@ -123,7 +123,7 @@ bool SyntaxAnalysis::mainFunction()
 		return false;
 	}
 
-	tempCode.add(Quaternion(quaternion::FUNCTIONDEF, "void", "main", ""));
+	tempCode.add(Quaternion(quaternion::FUNCTION, "void", "main", ""));
 
 	currentDomain = "main";
 	currentIdentifier = "main";
@@ -684,7 +684,7 @@ bool SyntaxAnalysis::varWithoutInit()
 	
 	if (dimension == 0)
 	{
-		if (!symbolTable.push(SymbolTableItem(currentIdentifier, currentDomain, tempType, dimension, row, column)))
+		if (!symbolTable.push(SymbolTableItem(currentIdentifier, currentDomain, VAR, tempType)))
 		{
 			errorHandler.error(lexicalAnalysis.getLineCount(), B);
 		}
@@ -1970,7 +1970,7 @@ bool SyntaxAnalysis::expression()
 	
 	if (pre && temp == MINU)
 	{
-		dest = tempCode.genTempVar();
+		dest = tempCode.genTempVar(currentDomain);
 		tempCode.add(Quaternion(quaternion::SUB, "", oper1, dest));
 		oper1 = dest;
 	}
@@ -1995,7 +1995,7 @@ bool SyntaxAnalysis::expression()
 			return false;
 		}
 		oper2 = tempCode.getDest();
-		dest = tempCode.genTempVar();
+		dest = tempCode.genTempVar(currentDomain);
 		if (temp == PLUS)
 		{
 			tempCode.add(Quaternion(quaternion::ADD, oper1, oper2, dest));
@@ -2051,7 +2051,7 @@ bool SyntaxAnalysis::term()
 			return false;
 		}
 		oper2 = tempCode.getDest();
-		string dest = tempCode.genTempVar();
+		string dest = tempCode.genTempVar(currentDomain);
 		if (temp == MULT)
 		{
 			tempCode.add(Quaternion(quaternion::MULT, oper1, oper2, dest));
@@ -2353,13 +2353,13 @@ bool SyntaxAnalysis::parameterValueTable()
 				  ＜标识符＞'['＜表达式＞']''['＜表达式＞']' =＜表达式＞*/
 bool SyntaxAnalysis::assignStatement()
 {
+	// TODO:更新symbolTable
 	if (!hasNext || symbolCode != IDENFR)
 	{
 		return false;
 	}
 
 	SymbolTableItemKind kind = VAR;
-
 	currentIdentifier = lexicalAnalysis.getToken();
 
 	string assignIdetifier = currentIdentifier;
@@ -2372,6 +2372,8 @@ bool SyntaxAnalysis::assignStatement()
 	{
 		kind = symbolTable.getCurrentKind();
 	}
+
+	SymbolTableItem item = symbolTable.getCurrent();
 
 	getNext();
 	if (hasNext && symbolCode == LBRACK)
@@ -2461,7 +2463,7 @@ bool SyntaxAnalysis::assignStatement()
 	{
 		return false;
 	}
-
+	
 	tempCode.add(Quaternion(quaternion::ASSIGN, assignIdetifier, tempCode.getDest(), ""));
 	if (kind == CONST)
 	{
@@ -2825,7 +2827,7 @@ bool SyntaxAnalysis::integer()
 		return false;
 	}
 
-	currentValue = (isMinus) ? currentValue : currentValue;
+	currentValue = (isMinus) ? -currentValue : currentValue;
 	output.syntaxAnalysisOutput("整数");
 	return true;
 }

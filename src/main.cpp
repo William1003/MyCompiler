@@ -18,7 +18,7 @@ int main()
 	LexicalAnalysis lexicalAnalysis(myOutput, errorHandler);
 	lexicalAnalysis.readFile(ifname);
 	SymbolTable table;
-	TempCode tempCode;
+	TempCode tempCode(table);
 	Mips mips(tempCode, table);
 	SyntaxAnalysis syntaxAnalysis(errorHandler, lexicalAnalysis, myOutput, table, tempCode);
 	syntaxAnalysis.startSyntaxAnalysis();

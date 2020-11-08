@@ -4,6 +4,7 @@
 #include<fstream>
 #include<vector>
 #include"Quaternion.h"
+#include"SymbolTable.h"
 
 using namespace std;
 
@@ -14,11 +15,11 @@ private:
 	string oper1;
 	string oper2;
 	string dest;
-
+	SymbolTable& symbolTable;
 public:
-	TempCode();
+	TempCode(SymbolTable& symbolTable);
 	void add(Quaternion quaternion);
-	string genTempVar();
+	string genTempVar(string domain);
 	void setOper1(string oper1) 
 	{
 		this->oper1 = oper1;

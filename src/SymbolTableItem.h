@@ -94,6 +94,14 @@ public:
 	void setParaNum(int n);
 	int getParaCount();
 	int addr;
+	int getIntValue()
+	{
+		return intValue;
+	}
+	char getCharValue()
+	{
+		return charValue;
+	}
 };
 
 #endif // !_SYMBOL_TABLE_ITEM_H_

@@ -55,7 +55,7 @@ bool SymbolTable::push(const SymbolTableItem& item)
 	}
 	table.push_back(item);
 	count++;
-	SymbolTableItem temp = table[count - 1];
+	SymbolTableItem& temp = table[count - 1];
 	string domain = temp.getDomain();
 	if (temp.getKind() == VAR)
 	{
