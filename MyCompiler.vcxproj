@@ -144,6 +144,7 @@
     <ClInclude Include="src\constValue.h" />
     <ClInclude Include="src\ErrorHandler.h" />
     <ClInclude Include="src\globalMacro.h" />
+    <ClInclude Include="src\Mips.h" />
     <ClInclude Include="src\Quaternion.h" />
     <ClInclude Include="src\TempCode.h" />
     <ClInclude Include="src\LexicalAnalysis.h" />
@@ -157,6 +158,7 @@
     <ClCompile Include="src\ErrorHandler.cpp" />
     <ClCompile Include="src\LexicalAnalysis.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Mips.cpp" />
     <ClCompile Include="src\Output.cpp" />
     <ClCompile Include="src\Quaternion.cpp" />
     <ClCompile Include="src\SymbolTable.cpp" />

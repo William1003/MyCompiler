@@ -5,14 +5,10 @@ TempCode::TempCode()
 	tempCode.open("tempCode.txt");
 }
 
-void TempCode::output()
-{
-}
-
 string TempCode::genTempVar()
 {
 	static int n = 0;
-	return "T" + to_string(n++);
+	return "#T" + to_string(n++);
 }
 
 void TempCode::outputToFile()

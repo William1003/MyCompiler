@@ -9,16 +9,14 @@ using namespace std;
 
 class Quaternion
 {
-private:
-	quaternion::QuaternionOpType op;
-	string oper1;
-	string oper2;
-	string dest;
-
 public:
 	Quaternion(quaternion::QuaternionOpType op, string oper1, string oper2, string dest) : 
 		op(op), oper1(oper1), oper2(oper2), dest(dest) {}
 	string toString();
+	quaternion::QuaternionOpType op;
+	string oper1;
+	string oper2;
+	string dest;
 };
 
 #endif // !_QUATERNION_H_

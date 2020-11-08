@@ -6,6 +6,7 @@ SymbolTable::SymbolTable()
 	count = 1;
 	symbolTableFile.open("symbolTable.txt");
 	table.push_back(SymbolTableItem("0", "1", FUNCTION, VOID));
+	addrCount["0"] = 0;
 }
 
 bool SymbolTable::hasItem(string name, string domain)
@@ -54,6 +55,21 @@ bool SymbolTable::push(const SymbolTableItem& item)
 	}
 	table.push_back(item);
 	count++;
+	SymbolTableItem temp = table[count - 1];
+	string domain = temp.getDomain();
+	if (temp.getKind() == VAR)
+	{
+		if (addrCount.count(domain) > 0)
+		{
+			temp.addr = addrCount[domain];
+			addrCount[domain] += 1;
+		}
+		else
+		{
+			temp.addr = 0;
+			addrCount[domain] = 1;
+		}
+	}
 	return true;
 }
 
@@ -151,4 +167,10 @@ bool SymbolTable::nextParameter(string functionName)
 		return true;
 	}
 	return false;
+}
+
+SymbolTableItem SymbolTable::getItem(string name, string domain)
+{
+	hasItem(name, domain);
+	return table[index];
 }

@@ -5,6 +5,7 @@
 #include"iostream"
 #include"SymbolTable.h"
 #include"TempCode.h"
+#include"Mips.h"
 using namespace std;
 
 int main()
@@ -18,10 +19,12 @@ int main()
 	lexicalAnalysis.readFile(ifname);
 	SymbolTable table;
 	TempCode tempCode;
+	Mips mips(tempCode, table);
 	SyntaxAnalysis syntaxAnalysis(errorHandler, lexicalAnalysis, myOutput, table, tempCode);
 	syntaxAnalysis.startSyntaxAnalysis();
 	// myOutput.outputToFile();
 	tempCode.outputToFile();
 	table.output();
+	mips.generate();
 	return 0;
 }

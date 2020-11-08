@@ -18,36 +18,36 @@ string Quaternion::toString()
 		s = dest + " = " + oper1 + " / " + oper2;
 		break;
 	case quaternion::CONSTINT:
-		s = "const int " + oper1 + " = " + oper2;
+		s = "constint " + oper1 + " = " + oper2;
 		break;
 	case quaternion::CONSTCHAR:
-		s = "const char " + oper1 + " = " + oper2;
+		s = "constchar " + oper1 + " = " + oper2;
 		break;
 	case quaternion::VARINT:
 		if (oper2.empty())
 		{
-			s = "var int " + oper1;
+			s = "varint " + oper1;
 		}
 		else
 		{
-			s = "var int " + oper1 + " = " + oper2;
+			s = "varint " + oper1 + " = " + oper2;
 		}
 		break;
 	case quaternion::VARCHAR:
 		if (oper2.empty())
 		{
-			s = "var char " + oper1;
+			s = "varchar " + oper1;
 		}
 		else
 		{
-			s = "var char " + oper1 + " = " + oper2;
+			s = "varchar " + oper1 + " = " + oper2;
 		}
 		break;
 	case quaternion::READINT:
-		s = "read int " + oper2;
+		s = "readint " + oper2;
 		break;
 	case quaternion::READCHAR:
-		s = "read char " + oper2;
+		s = "readchar " + oper2;
 		break;
 	case quaternion::PRINTS:
 		s = "prints " + oper1;
@@ -60,6 +60,9 @@ string Quaternion::toString()
 		break;
 	case quaternion::ASSIGN:
 		s = "assign " + oper1 + " = " + oper2;
+		break;
+	case quaternion::FUNCTIONDEF:
+		s = "function " + oper1 + " " + oper2;
 		break;
 	default:
 		break;

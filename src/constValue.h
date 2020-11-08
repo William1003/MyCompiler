@@ -93,7 +93,8 @@ namespace quaternion
 		PRINTS,
 		PRINTVAR,
 		PRINTSV,
-		ASSIGN
+		ASSIGN,
+		FUNCTIONDEF
 	};
 }
 

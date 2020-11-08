@@ -123,6 +123,8 @@ bool SyntaxAnalysis::mainFunction()
 		return false;
 	}
 
+	tempCode.add(Quaternion(quaternion::FUNCTIONDEF, "void", "main", ""));
+
 	currentDomain = "main";
 	currentIdentifier = "main";
 
@@ -2217,8 +2219,15 @@ bool SyntaxAnalysis::factor()
 		output.syntaxAnalysisOutput("因子");
 		return true;
 	}
-	if (integer() || character())
+	if (integer())
 	{
+		tempCode.setDest(to_string(currentValue));
+		output.syntaxAnalysisOutput("因子");
+		return true;
+	}
+	else if (character())
+	{
+		tempCode.setDest(to_string(currentChar));
 		output.syntaxAnalysisOutput("因子");
 		return true;
 	}
@@ -2556,8 +2565,14 @@ bool SyntaxAnalysis::printfStatement()
 				return false;
 			}
 			
-
-			tempCode.add(Quaternion(quaternion::PRINTSV, token, tempCode.getDest(), ""));
+			if (exprType == CHAR)
+			{
+				tempCode.add(Quaternion(quaternion::PRINTSV, token, tempCode.getDest(), "char"));
+			}
+			else
+			{
+				tempCode.add(Quaternion(quaternion::PRINTSV, token, tempCode.getDest(), ""));
+			}
 			getNext();
 			output.syntaxAnalysisOutput("写语句");
 			return true;
@@ -2582,7 +2597,14 @@ bool SyntaxAnalysis::printfStatement()
 		lexicalAnalysis.setAutoComplete();
 	}
 
-	tempCode.add(Quaternion(quaternion::PRINTVAR, tempCode.getDest(), "", ""));
+	if (exprType == CHAR)
+	{
+		tempCode.add(Quaternion(quaternion::PRINTVAR, tempCode.getDest(), "", "char"));
+	}
+	else
+	{
+		tempCode.add(Quaternion(quaternion::PRINTVAR, tempCode.getDest(), "", ""));
+	}
 	getNext();
 	output.syntaxAnalysisOutput("写语句");
 	return true;
@@ -2865,6 +2887,7 @@ bool SyntaxAnalysis::character()
 	if (symbolCode == CHARCON && lexicalAnalysis.isCharacter())
 	{
 		exprType = CHAR;
+		currentChar = lexicalAnalysis.getToken().c_str()[0];
 		getNext();
 		return true;
 	}

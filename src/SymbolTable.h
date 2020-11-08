@@ -9,10 +9,10 @@
 class SymbolTable
 {
 private:
-	vector<SymbolTableItem> table;
 	int count = 0;
 	ofstream symbolTableFile;
 	int index = 0;
+	map<string, int> addrCount;
 
 public:
 	SymbolTable();
@@ -29,6 +29,8 @@ public:
 	SymbolTableItemKind getCurrentKind();
 	bool findParameter(string functionName);
 	bool nextParameter(string functionName);
+	vector<SymbolTableItem> table;
+	SymbolTableItem getItem(string name, string domain);
 };
 
 #endif // !_SYMBOL_TABLE_H_

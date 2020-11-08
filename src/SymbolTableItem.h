@@ -93,6 +93,7 @@ public:
 	bool isFullyAssign();
 	void setParaNum(int n);
 	int getParaCount();
+	int addr;
 };
 
 #endif // !_SYMBOL_TABLE_ITEM_H_

@@ -11,7 +11,6 @@ class TempCode
 {
 private:
 	ofstream tempCode;
-	vector<Quaternion> quaternions;
 	string oper1;
 	string oper2;
 	string dest;
@@ -19,7 +18,6 @@ private:
 public:
 	TempCode();
 	void add(Quaternion quaternion);
-	void output();
 	string genTempVar();
 	void setOper1(string oper1) 
 	{
@@ -46,7 +44,11 @@ public:
 		return dest;
 	}
 	void outputToFile();
-
+	vector<Quaternion> getQuaternions()
+	{
+		return quaternions;
+	}
+	vector<Quaternion> quaternions;
 };
 
 #endif // _TEMP_CODE_H_
