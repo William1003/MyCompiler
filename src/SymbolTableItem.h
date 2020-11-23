@@ -46,10 +46,7 @@ private:
 	int intValue = 0;
 	char charValue = '\0';
 	int dimension = 0;
-	int row = 1;
-	int column = 1;
-	int currentRow = 0;
-	int currentColumn = 0;
+	
 	vector<IntOrChar> values1D;
 	vector<vector<IntOrChar>> values2D;
 	int parameterCount = 0;
@@ -102,6 +99,10 @@ public:
 	{
 		return charValue;
 	}
+	int row = 1;
+	int column = 1;
+	int currentRow = 0;
+	int currentColumn = 0;
 };
 
 #endif // !_SYMBOL_TABLE_ITEM_H_

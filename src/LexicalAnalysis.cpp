@@ -445,6 +445,7 @@ void LexicalAnalysis::restore()
 	token = backupToken;
 	backupToken = "";
 	symbolCode = backupSymbolCode;
+	finish = false;
 }
 
 bool LexicalAnalysis::isCharacter()

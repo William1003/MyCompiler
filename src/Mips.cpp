@@ -1,4 +1,5 @@
 #include"Mips.h"
+#include <iostream>
 
 #define NEWLINE do {mips << "la $a0 newLine" << endl;\
 					mips << "li $v0 4" << endl;\
@@ -147,7 +148,7 @@ void Mips::generate()
 			{
 				if (inReg2)
 				{
-					mips << "sub $t2 $0 $t1";
+					mips << "sub $t2 $0 $t1" << endl;
 				}
 				else
 				{
@@ -159,7 +160,7 @@ void Mips::generate()
 			{
 				if (inReg1 && inReg2)
 				{
-					mips << "sub $t2 $t0 $t1";
+					mips << "sub $t2 $t0 $t1" << endl;
 				}
 				else if (inReg1 && !inReg2)
 				{
@@ -241,6 +242,11 @@ void Mips::generate()
 			else
 			{
 				mips << "sw $v0 " << to_string(-item.addr * 4) << "($fp)" << endl;
+			}
+			if (q.op == quaternion::READCHAR)
+			{
+				mips << "li $v0 12" << endl;
+				mips << "syscall" << endl;
 			}
 			break;
 		}
@@ -388,6 +394,102 @@ void Mips::generate()
 			mips << "move $fp $sp" << endl;
 			mips << "addi $sp $sp " << to_string(-varCount * 4) << endl;
 			break;
+		}
+		case quaternion::ARRAYASSIGN:
+		{
+			SymbolTableItem item = symbolTable.getItem(q.dest, currentDomain);
+			if (item.getDomain() == "0")
+			{
+				mips << "move $t0 $gp " << endl;
+				mips << "addi $t0 $t0 " << to_string(item.addr * 4) << endl;
+			}
+			else
+			{
+				mips << "move $t0 $sp" << endl;
+				mips << "addi $t0 $t0 " << to_string(-item.addr * 4) << endl;
+			}
+			string value1, value2;
+			bool inReg1 = false, inReg2 = false;
+			// 下标
+			loadValue("$t1", q.oper1, currentDomain, false, value1, inReg1);
+			// 要存的值
+			loadValue("$t2", q.oper2, currentDomain, true, value2, inReg2);
+			int v1 = atoi(value1.c_str());
+			if (inReg1)
+			{
+				mips << "li $t3 4" << endl;
+				mips << "mult $t1 $t3" << endl;
+				mips << "mflo $t3" << endl;
+				if (item.getDomain() == "0")
+				{
+					mips << "add $t0 $t0 $t3" << endl;
+				}
+				else
+				{
+					mips << "sub $t0 $t0 $t3" << endl;
+				}
+				mips << "sw $t2 0($t0)" << endl;
+			}
+			else
+			{
+				if (item.getDomain() == "0")
+				{
+					mips << "sw $t2 " << to_string(v1 * 4) << "($t0)" << endl;
+				}
+				else
+				{
+					mips << "sw $t2 " << to_string(-v1 * 4) << "($t0)" <<endl;
+				}
+			}
+			break;
+		}
+		case quaternion::GETARRAY:
+		{
+			SymbolTableItem item = symbolTable.getItem(q.oper1, currentDomain);
+
+			if (item.getDomain() == "0")
+			{
+				mips << "move $t0 $gp " << endl;
+				mips << "addi $t0 $t0 " << to_string(item.addr * 4) << endl;
+			}
+			else
+			{
+				mips << "move $t0 $sp" << endl;
+				mips << "addi $t0 $t0 " << to_string(-item.addr * 4) << endl;
+			}
+			string value;
+			bool inReg = false;
+			loadValue("$t1", q.oper2, currentDomain, false, value, inReg);
+			int v = atoi(value.c_str());
+			if (inReg)
+			{
+				mips << "li $t2 4" << endl;
+				mips << "mult $t1 $t2" << endl;
+				mips << "mflo $t1" << endl;
+				if (item.getDomain() == "0")
+				{
+					mips << "add $t0 $t0 $t1" << endl;
+				}
+				else
+				{
+					mips << "sub $t0 $t0 $t1" << endl;
+				}
+				mips << "lw $t0 0($t0)" << endl;
+				saveValue(q.dest, currentDomain, "$t0");
+			}
+			else
+			{
+				if (item.getDomain() == "0")
+				{
+					mips << "addi $t0 $t0 " << to_string(v * 4) << endl;
+				}
+				else
+				{
+					mips << "addi $t0 $t0 " << to_string(-v * 4) << endl;
+				}
+				mips << "lw $t0 0($t0)" << endl;
+				saveValue(q.dest, currentDomain, "$t0");
+			}
 		}
 		default:
 			break;

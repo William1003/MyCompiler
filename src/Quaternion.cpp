@@ -9,7 +9,7 @@ string Quaternion::toString()
 		s = dest + " = " + oper1 + " + " + oper2;
 		break;
 	case quaternion::SUB:
-		s = dest + "  =" + oper1 + " - " + oper2;
+		s = dest + " = " + oper1 + " - " + oper2;
 		break;
 	case quaternion::MULT:
 		s = dest + " = " + oper1 + " * " + oper2;
@@ -63,6 +63,24 @@ string Quaternion::toString()
 		break;
 	case quaternion::FUNCTION:
 		s = "function " + oper1 + " " + oper2;
+		break;
+	case quaternion::ARRAY1INT:
+		s = "array1int " + oper1;
+		break;
+	case quaternion::ARRAY1CHAR:
+		s = "array1char " + oper1;
+		break;
+	case quaternion::ARRAY2INT:
+		s = "array2int " + oper1;
+		break;
+	case quaternion::ARRAY2CHAR:
+		s = "array2char " + oper1;
+		break;
+	case quaternion::ARRAYASSIGN:
+		s = "arrayassign " + dest + "[" + oper1 + "] = " + oper2;
+		break;
+	case quaternion::GETARRAY:
+		s = "getarray " + dest + " = " + oper1 + "[" + oper2 + "]";
 		break;
 	default:
 		break;

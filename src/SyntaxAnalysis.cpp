@@ -642,6 +642,14 @@ bool SyntaxAnalysis::varWithoutInit()
 				{
 					errorHandler.error(lexicalAnalysis.getLineCount(), B);
 				}
+				if (tempType == INT)
+				{
+					tempCode.add(Quaternion(quaternion::ARRAY1INT, currentIdentifier, "", ""));
+				}
+				else if (tempType == CHAR)
+				{
+					tempCode.add(Quaternion(quaternion::ARRAY1CHAR, currentIdentifier, "", ""));
+				}
 				output.syntaxAnalysisOutput("变量定义无初始化");
 				return true;
 			}
@@ -677,7 +685,14 @@ bool SyntaxAnalysis::varWithoutInit()
 			{
 				errorHandler.error(lexicalAnalysis.getLineCount(), B);
 			}
-			
+			if (tempType == INT)
+			{
+				tempCode.add(Quaternion(quaternion::ARRAY2INT, currentIdentifier, "", ""));
+			}
+			else if (tempType == CHAR)
+			{
+				tempCode.add(Quaternion(quaternion::ARRAY2CHAR, currentIdentifier, "", ""));
+			}
 			getNext();
 		}
 	}
@@ -792,6 +807,14 @@ bool SyntaxAnalysis::varWithoutInit()
 			{
 				errorHandler.error(lexicalAnalysis.getLineCount(), B);
 			}
+			if (tempType == INT)
+			{
+				tempCode.add(Quaternion(quaternion::ARRAY1INT, currentIdentifier, "", ""));
+			}
+			else if (tempType == CHAR)
+			{
+				tempCode.add(Quaternion(quaternion::ARRAY1CHAR, currentIdentifier, "", ""));
+			}
 			continue;
 		}
 
@@ -800,6 +823,14 @@ bool SyntaxAnalysis::varWithoutInit()
 			if (!symbolTable.push(SymbolTableItem(currentIdentifier, currentDomain, tempType, dimension, row, column)))
 			{
 				errorHandler.error(lexicalAnalysis.getLineCount(), B);
+			}
+			if (tempType == INT)
+			{
+				tempCode.add(Quaternion(quaternion::ARRAY1INT, currentIdentifier, "", ""));
+			}
+			else if (tempType == CHAR)
+			{
+				tempCode.add(Quaternion(quaternion::ARRAY1CHAR, currentIdentifier, "", ""));
 			}
 			break;
 		}
@@ -834,6 +865,14 @@ bool SyntaxAnalysis::varWithoutInit()
 		if (!symbolTable.push(SymbolTableItem(currentIdentifier, currentDomain, tempType, dimension, row, column)))
 		{
 			errorHandler.error(lexicalAnalysis.getLineCount(), B);
+		}
+		if (tempType == INT)
+		{
+			tempCode.add(Quaternion(quaternion::ARRAY2INT, currentIdentifier, "", ""));
+		}
+		else if (tempType == CHAR)
+		{
+			tempCode.add(Quaternion(quaternion::ARRAY2CHAR, currentIdentifier, "", ""));
 		}
 		getNext();
 	}
@@ -984,8 +1023,18 @@ bool SyntaxAnalysis::varWithInit()
 			{
 				errorHandler.error(lexicalAnalysis.getLineCount(), O);
 			}
+
+			if (tempType == INT)
+			{
+				tempCode.add(Quaternion(quaternion::ARRAYASSIGN, to_string(item.currentRow * item.column + item.currentColumn), to_string(currentValue), currentIdentifier));
+			}
+			else
+			{
+				tempCode.add(Quaternion(quaternion::ARRAYASSIGN, to_string(item.currentRow * item.column + item.currentColumn), to_string(currentChar), currentIdentifier));
+			}
+
 			bool addRes = (tempType == INT)? item.addValue(currentValue) : item.addValue(currentChar);
-			
+
 			if (!addRes)
 			{
 				errorHandler.error(lexicalAnalysis.getLineCount(), N);
@@ -1006,6 +1055,14 @@ bool SyntaxAnalysis::varWithInit()
 					return false;
 				}
 
+				if (tempType == INT)
+				{
+					tempCode.add(Quaternion(quaternion::ARRAYASSIGN, to_string(item.currentRow * item.column + item.currentColumn), to_string(currentValue), currentIdentifier));
+				}
+				else
+				{
+					tempCode.add(Quaternion(quaternion::ARRAYASSIGN, to_string(item.currentRow * item.column + item.currentColumn), to_string(currentChar), currentIdentifier));
+				}
 				// TODO: 
 				bool addRes = (tempType == INT) ? item.addValue(currentValue) : item.addValue(currentChar);
 
@@ -1063,8 +1120,18 @@ bool SyntaxAnalysis::varWithInit()
 				{
 					errorHandler.error(lexicalAnalysis.getLineCount(), O);
 				}
-				bool addRes = (tempType == INT) ? item.addValue(currentValue) : item.addValue(currentChar);
 
+				if (tempType == INT)
+				{
+					tempCode.add(Quaternion(quaternion::ARRAYASSIGN, to_string(item.currentRow * item.column + item.currentColumn), to_string(currentValue), currentIdentifier));
+				}
+				else
+				{
+					tempCode.add(Quaternion(quaternion::ARRAYASSIGN, to_string(item.currentRow * item.column + item.currentColumn), to_string(currentChar), currentIdentifier));
+				}
+
+				bool addRes = (tempType == INT) ? item.addValue(currentValue) : item.addValue(currentChar);
+				
 				if (!addRes)
 				{
 					errorHandler.error(lexicalAnalysis.getLineCount(), N);
@@ -1090,6 +1157,16 @@ bool SyntaxAnalysis::varWithInit()
 					{
 						errorHandler.error(lexicalAnalysis.getLineCount(), O);
 					}
+
+					if (tempType == INT)
+					{
+						tempCode.add(Quaternion(quaternion::ARRAYASSIGN, to_string(item.currentRow * item.column + item.currentColumn), to_string(currentValue), currentIdentifier));
+					}
+					else
+					{
+						tempCode.add(Quaternion(quaternion::ARRAYASSIGN, to_string(item.currentRow * item.column + item.currentColumn), to_string(currentChar), currentIdentifier));
+					}
+
 					bool addRes = (tempType == INT) ? item.addValue(currentValue) : item.addValue(currentChar);
 
 					if (!addRes)
@@ -1169,6 +1246,16 @@ bool SyntaxAnalysis::varWithInit()
 		{
 			errorHandler.error(lexicalAnalysis.getLineCount(), O);
 		}
+
+		if (tempType == INT)
+		{
+			tempCode.add(Quaternion(quaternion::ARRAYASSIGN, to_string(item.currentRow * item.column + item.currentColumn), to_string(currentValue), currentIdentifier));
+		}
+		else
+		{
+			tempCode.add(Quaternion(quaternion::ARRAYASSIGN, to_string(item.currentRow * item.column + item.currentColumn), to_string(currentChar), currentIdentifier));
+		}
+
 		bool addRes = (tempType == INT) ? item.addValue(currentValue) : item.addValue(currentChar);
 
 		if (!addRes)
@@ -1196,6 +1283,16 @@ bool SyntaxAnalysis::varWithInit()
 			{
 				errorHandler.error(lexicalAnalysis.getLineCount(), O);
 			}
+
+			if (tempType == INT)
+			{
+				tempCode.add(Quaternion(quaternion::ARRAYASSIGN, to_string(item.currentRow * item.column + item.currentColumn), to_string(currentValue), currentIdentifier));
+			}
+			else
+			{
+				tempCode.add(Quaternion(quaternion::ARRAYASSIGN, to_string(item.currentRow * item.column + item.currentColumn), to_string(currentChar), currentIdentifier));
+			}
+
 			bool addRes = (tempType == INT) ? item.addValue(currentValue) : item.addValue(currentChar);
 
 			if (!addRes)
@@ -1968,6 +2065,11 @@ bool SyntaxAnalysis::expression()
 
 	oper1 = tempCode.getDest();
 	
+	if (pre)
+	{
+		exprType = INT;
+	}
+
 	if (pre && temp == MINU)
 	{
 		dest = tempCode.genTempVar(currentDomain);
@@ -2085,6 +2187,7 @@ bool SyntaxAnalysis::factor()
 	//特殊判断, 是不是函数?
 	if (symbolCode == IDENFR)
 	{
+		string tempIdentifier = lexicalAnalysis.getToken();
 		if (lexicalAnalysis.preRead() != LPARENT)
 		{
 			lexicalAnalysis.restore();
@@ -2116,11 +2219,14 @@ bool SyntaxAnalysis::factor()
 			SymbolTableItemType temp = exprType;
 			if (symbolCode == LBRACK)
 			{
+				SymbolTableItem item = symbolTable.getItem(currentIdentifier, currentDomain);
 				getNext();
 				if (!expression())
 				{
 					return false;
 				}
+
+				string index1 = tempCode.getDest();
 
 				if (exprType != INT)
 				{
@@ -2130,6 +2236,7 @@ bool SyntaxAnalysis::factor()
 				{
 					return false;
 				}
+
 				if (symbolCode != RBRACK)
 				{
 					errorHandler.error(errorLine, M);
@@ -2150,6 +2257,14 @@ bool SyntaxAnalysis::factor()
 						return false;
 					}
 
+					string index2 = tempCode.getDest();
+
+					string temp1 = tempCode.genTempVar(currentDomain);
+					tempCode.add(Quaternion(quaternion::MULT, index1, to_string(item.column), temp1));
+
+					string temp2 = tempCode.genTempVar(currentDomain);
+					tempCode.add(Quaternion(quaternion::ADD, temp1, index2, temp2));
+
 					if (exprType != INT)
 					{
 						errorHandler.error(lexicalAnalysis.getLineCount(), I);
@@ -2167,9 +2282,16 @@ bool SyntaxAnalysis::factor()
 					}
 					getNext();
 					exprType = temp;
+
+					string tempDest = tempCode.genTempVar(currentDomain);
+					tempCode.add(Quaternion(quaternion::GETARRAY, tempIdentifier, temp2, tempDest));
+					tempCode.setDest(tempDest);
 					output.syntaxAnalysisOutput("因子");
 					return true;
 				}
+				string tempDest = tempCode.genTempVar(currentDomain);
+				tempCode.add(Quaternion(quaternion::GETARRAY, tempIdentifier, tempCode.getDest(), tempDest));
+				tempCode.setDest(tempDest);
 				exprType = temp;
 				output.syntaxAnalysisOutput("因子");
 				return true;
@@ -2384,6 +2506,8 @@ bool SyntaxAnalysis::assignStatement()
 			return false;
 		}
 
+		string index1 = tempCode.getDest();
+
 		if (exprType != INT)
 		{
 			errorHandler.error(lexicalAnalysis.getLineCount(), I);
@@ -2403,6 +2527,8 @@ bool SyntaxAnalysis::assignStatement()
 				return false;
 			}
 
+			string index2 = tempCode.getDest();
+
 			if (exprType != INT)
 			{
 				errorHandler.error(lexicalAnalysis.getLineCount(), I);
@@ -2414,6 +2540,10 @@ bool SyntaxAnalysis::assignStatement()
 				lexicalAnalysis.setAutoComplete();
 			}
 
+			string tempDest1 = tempCode.genTempVar(currentDomain);
+			string tempDest2 = tempCode.genTempVar(currentDomain);
+			tempCode.add(Quaternion(quaternion::MULT, index1, to_string(item.column), tempDest1));
+			tempCode.add(Quaternion(quaternion::ADD, tempDest1, index2, tempDest2));
 			getNext();
 			if (!hasNext || symbolCode != ASSIGN)
 			{
@@ -2429,6 +2559,10 @@ bool SyntaxAnalysis::assignStatement()
 			if (kind == CONST)
 			{
 				errorHandler.error(lexicalAnalysis.getLineCount(), J);
+			}
+			else
+			{
+				tempCode.add(Quaternion(quaternion::ARRAYASSIGN, tempDest2, tempCode.getDest(), assignIdetifier));
 			}
 			output.syntaxAnalysisOutput("赋值语句");
 			return true;
@@ -2448,6 +2582,10 @@ bool SyntaxAnalysis::assignStatement()
 		if (kind == CONST)
 		{
 			errorHandler.error(lexicalAnalysis.getLineCount(), J);
+		}
+		else
+		{
+			tempCode.add(Quaternion(quaternion::ARRAYASSIGN, index1, tempCode.getDest(), assignIdetifier));
 		}
 		output.syntaxAnalysisOutput("赋值语句");
 		return true;
@@ -2813,13 +2951,13 @@ bool SyntaxAnalysis::integer()
 
 	if (symbolCode == PLUS || symbolCode ==  MINU) 
 	{
+		isMinus = (symbolCode == (PLUS)) ? false : true;
 		getNext();
 		if (!uinteger())
 		{
 			errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 			return false;
 		}
-		isMinus = (symbolCode == (PLUS)) ? false : true;
 	}
 
 	else if (!uinteger())

@@ -70,6 +70,19 @@ bool SymbolTable::push(const SymbolTableItem& item)
 			addrCount[domain] = 1;
 		}
 	}
+	else if (temp.getKind() == ARRAY)
+	{
+		if (addrCount.count(domain) > 0)
+		{
+			temp.addr = addrCount[domain];
+			addrCount[domain] += temp.row * temp.column;
+		}
+		else
+		{
+			temp.addr = 0;
+			addrCount[domain] = temp.row * temp.column;
+		}
+	}
 	return true;
 }
 
