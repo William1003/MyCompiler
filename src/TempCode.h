@@ -20,6 +20,7 @@ public:
 	TempCode(SymbolTable& symbolTable);
 	void add(Quaternion quaternion);
 	string genTempVar(string domain);
+	string genLable();
 	void setOper1(string oper1) 
 	{
 		this->oper1 = oper1;
@@ -50,6 +51,8 @@ public:
 		return quaternions;
 	}
 	vector<Quaternion> quaternions;
+	SymbolCode relationOp;
+	void genBranch(string left, string right, string lable);
 };
 
 #endif // _TEMP_CODE_H_

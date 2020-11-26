@@ -100,7 +100,19 @@ namespace quaternion
 		ARRAY2INT,
 		ARRAY2CHAR,
 		ARRAYASSIGN,
-		GETARRAY
+		GETARRAY,
+		LSS,
+		LEQ,
+		EQL,
+		GEQ,
+		GRE,
+		NEQ,
+		LABLE,
+		JUMP,
+		PUSHPARA,
+		CALLFUNCTION,
+		RETURN,
+		BLANK
 	};
 }
 

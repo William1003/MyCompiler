@@ -32,6 +32,12 @@ void Mips::freeReg(int i)
 void Mips::loadValue(string regName, string name, string domain, bool loadConst, string& value, bool& inReg)
 {
 	// 是符号
+	if (name == "_functionRet")
+	{
+		mips << "move " << regName << " $v0" << endl;
+		inReg = true;
+		return;
+	}
 	if (symbolTable.hasItem(name, domain))
 	{
 		SymbolTableItem& item = symbolTable.getCurrent();
@@ -257,6 +263,21 @@ void Mips::generate()
 			NEWLINE;
 			break;
 		case quaternion::PRINTVAR:
+			if (q.oper1 == "_funcRet")
+			{
+				mips << "move $a0 $v0" << endl;
+				if (q.dest == "char")
+				{
+					mips << "li $v0 11" << endl;
+				}
+				else
+				{
+					mips << "li $v0 1" << endl;
+				}
+				mips << "syscall" << endl;
+				NEWLINE;
+				break;
+			}
 			if (!symbolTable.hasItem(q.oper1, currentDomain))
 			{
 				mips << "li $a0 " << q.oper1 << endl;
@@ -317,6 +338,21 @@ void Mips::generate()
 			mips << "la $a0 string" << to_string(strCount++) << endl;
 			mips << "li $v0 4" << endl;
 			mips << "syscall" << endl;
+			if (q.oper1 == "_funcRet")
+			{
+				mips << "move $a0 $v0" << endl;
+				if (q.dest == "char")
+				{
+					mips << "li $v0 11" << endl;
+				}
+				else
+				{
+					mips << "li $v0 1" << endl;
+				}
+				mips << "syscall" << endl;
+				NEWLINE;
+				break;
+			}
 			if (!symbolTable.hasItem(q.oper2, currentDomain))
 			{
 				mips << "li $a0 " << q.oper2 << endl;
@@ -490,6 +526,162 @@ void Mips::generate()
 				mips << "lw $t0 0($t0)" << endl;
 				saveValue(q.dest, currentDomain, "$t0");
 			}
+		}
+		case quaternion::LABLE:
+		{
+			mips << q.dest << ":" << endl;
+			break;
+		}
+		case quaternion::JUMP:
+		{
+			mips << "j " << q.dest << endl;
+			break;
+		}
+		case quaternion::LSS:
+		case quaternion::LEQ:
+		case quaternion::GRE:
+		case quaternion::GEQ:
+		case quaternion::EQL:
+		case quaternion::NEQ:
+		{
+			string value1, value2;
+			bool inReg1 = false, inReg2 = false;
+			loadValue("$t0", q.oper1, currentDomain, true, value1, inReg1);
+			loadValue("$t1", q.oper2, currentDomain, false, value2, inReg2);
+			switch (q.op)
+			{
+			case quaternion::LSS:
+			{
+				if (inReg2)
+				{
+					mips << "blt $t0 $t1 " << q.dest << endl;
+				}
+				else
+				{
+					mips << "blt $t0 " << value2 << " " << q.dest << endl;
+				}
+				break;
+			}
+			case quaternion::LEQ:
+			{
+				if (inReg2)
+				{
+					mips << "ble $t0 $t1 " << q.dest << endl;
+				}
+				else
+				{
+					mips << "ble $t0 " << value2 << " " << q.dest << endl;
+				}
+				break;
+			}
+			case quaternion::GRE:
+			{
+				if (inReg2)
+				{
+					mips << "bgt $t0 $t1 " << q.dest << endl;
+				}
+				else
+				{
+					mips << "bgt $t0 " << value2 << " " << q.dest << endl;
+				}
+				break;
+			}
+			case quaternion::GEQ:
+			{
+				if (inReg2)
+				{
+					mips << "bge $t0 $t1 " << q.dest << endl;
+				}
+				else
+				{
+					mips << "bge $t0 " << value2 << " " << q.dest << endl;
+				}
+				break;
+			}
+			case quaternion::EQL:
+			{
+				if (inReg2)
+				{
+					mips << "beq $t0 $t1 " << q.dest << endl;
+				}
+				else
+				{
+					mips << "beq $t0 " << value2 << " " << q.dest << endl;
+				}
+				break;
+			}
+			case quaternion::NEQ:
+			{
+				if (inReg2)
+				{
+					mips << "bne $t0 $t1 " << q.dest << endl;
+				}
+				else
+				{
+					mips << "bne $t0 " << value2 << " " << q.dest << endl;
+				}
+				break;
+			}
+			default:
+				break;
+			}
+		}
+		case quaternion::PUSHPARA:
+		{
+			int paraNum = atoi(q.oper1.c_str());
+			bool inReg = false;
+			string value;
+			loadValue("$t0", q.oper2, currentDomain, false, value, inReg);
+			if (paraNum > 3)
+			{
+				if (!inReg)
+				{
+					mips << "li $t0 " << value << endl;
+				}
+				mips << "sw $t0 " << to_string(-4 * paraNum - 8) << "($sp)" << endl;
+			}
+			else
+			{
+				if (inReg)
+				{
+					mips << "move $a" << to_string(paraNum) << " $t0" << endl;
+				}
+				else
+				{
+					mips << "li $t0 " << value << endl;
+					mips << "li $a" << to_string(paraNum) << " " << value << endl;
+				}
+				mips << "sw $t0 " << to_string(-4 * paraNum - 8) << "($sp)" << endl;
+			}
+			break;
+		}
+		case quaternion::CALLFUNCTION:
+		{
+			mips << "addi $sp $sp -8" << endl;
+			mips << "sw $ra 4($sp)" << endl;
+			mips << "sw $fp 8($sp)" << endl;
+
+			mips << "jal " << q.dest << endl;
+			
+			mips << "lw $ra 4($sp)" << endl;
+			mips << "lw $fp 8($sp)" << endl;
+			mips << "addi $sp $sp 8" << endl;
+
+			break;
+		}
+		case quaternion::RETURN:
+		{
+			int varCount = symbolTable.addrCount[currentDomain];
+			mips << "addi $sp $sp " << to_string(varCount * 4) << endl;
+			string value;
+			bool inReg = false;
+			if (q.dest != "")
+			{
+				loadValue("$v0", q.dest, currentDomain, true, value, inReg);
+			}
+
+			mips << "jr $ra" << endl;
+			break;
 		}
 		default:
 			break;

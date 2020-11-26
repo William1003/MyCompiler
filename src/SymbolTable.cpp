@@ -57,7 +57,8 @@ bool SymbolTable::push(const SymbolTableItem& item)
 	count++;
 	SymbolTableItem& temp = table[count - 1];
 	string domain = temp.getDomain();
-	if (temp.getKind() == VAR)
+
+	if (temp.getKind() == VAR || temp.getKind() == PARAMETER)
 	{
 		if (addrCount.count(domain) > 0)
 		{

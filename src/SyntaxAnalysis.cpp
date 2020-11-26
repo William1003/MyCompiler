@@ -1395,6 +1395,15 @@ bool SyntaxAnalysis::functionWithRet()
 	
 	currentDomain = currentIdentifier;
 
+	if (temp == INT)
+	{
+		tempCode.add(Quaternion(quaternion::FUNCTION, "int", currentIdentifier, ""));
+	}
+	else
+	{
+		tempCode.add(Quaternion(quaternion::FUNCTION, "char", currentIdentifier, ""));
+	}
+
 	if (symbolCode != LPARENT)
 	{
 		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
@@ -1454,7 +1463,7 @@ bool SyntaxAnalysis::functionWithRet()
 
 	getNext();
 	
-	
+	tempCode.add(Quaternion(quaternion::BLANK, "", "", ""));
 	output.syntaxAnalysisOutput("有返回值函数定义");
 	return true;
 }
@@ -1647,6 +1656,12 @@ bool SyntaxAnalysis::functionWithoutRet()
 	}
 
 	getNext();
+	if (!retStatement)
+	{
+		tempCode.add(Quaternion(quaternion::RETURN, "", "", ""));
+	}
+
+	tempCode.add(Quaternion(quaternion::BLANK, "", "", ""));
 
 	retStatement = false;
 	output.syntaxAnalysisOutput("无返回值函数定义");
@@ -1801,6 +1816,10 @@ bool SyntaxAnalysis::loopStatement()
 		return false;
 	}
 
+	string lable1 = tempCode.genLable();
+	string lable2 = tempCode.genLable();
+	string lable3 = tempCode.genLable();
+
 	if (symbolCode == WHILETK)
 	{
 		getNext();
@@ -1809,8 +1828,10 @@ bool SyntaxAnalysis::loopStatement()
 			return false;
 		}
 
+		tempCode.add(Quaternion(quaternion::LABLE, "", "", lable1));
+
 		getNext();
-		if (!condition())
+		if (!condition(lable2))
 		{
 			return false;
 		}
@@ -1821,12 +1842,18 @@ bool SyntaxAnalysis::loopStatement()
 			lexicalAnalysis.setAutoComplete();
 		}
 
+		tempCode.add(Quaternion(quaternion::JUMP, "", "", lable3));
+
+		tempCode.add(Quaternion(quaternion::LABLE, "", "", lable2));
 		getNext();
 
 		if (!statement())
 		{
 			return false;
 		}
+		
+		tempCode.add(Quaternion(quaternion::JUMP, "", "", lable1));
+		tempCode.add(Quaternion(quaternion::LABLE, "", "", lable3));
 	}
 
 	else if (symbolCode == FORTK)
@@ -1844,6 +1871,8 @@ bool SyntaxAnalysis::loopStatement()
 		}
 
 		currentIdentifier = lexicalAnalysis.getToken();
+
+		string tempIdentifier = currentIdentifier;
 
 		if (!symbolTable.hasItem(currentIdentifier, currentDomain))
 		{
@@ -1863,17 +1892,22 @@ bool SyntaxAnalysis::loopStatement()
 			return false;
 		}
 
+		tempCode.add(Quaternion(quaternion::ASSIGN, tempIdentifier, tempCode.getDest(), ""));
+
 		if (!hasNext || symbolCode != SEMICN)
 		{
 			errorHandler.error(errorLine, K);
 			lexicalAnalysis.setAutoComplete();
 		}
 
+		tempCode.add(Quaternion(quaternion::LABLE, "", "", lable1));
 		getNext();
-		if (!condition())
+		if (!condition(lable2))
 		{
 			return false;
 		}
+
+		tempCode.add(Quaternion(quaternion::JUMP, "", "", lable3));
 
 		if (!hasNext || symbolCode != SEMICN)
 		{
@@ -1887,6 +1921,8 @@ bool SyntaxAnalysis::loopStatement()
 		}
 
 		currentIdentifier = lexicalAnalysis.getToken();
+
+		string id1 = currentIdentifier;
 
 		if (!symbolTable.hasItem(currentIdentifier, currentDomain))
 		{
@@ -1906,6 +1942,7 @@ bool SyntaxAnalysis::loopStatement()
 		}
 
 		currentIdentifier = lexicalAnalysis.getToken();
+		string id2 = currentIdentifier;
 
 		if (!symbolTable.hasItem(currentIdentifier, currentDomain))
 		{
@@ -1918,6 +1955,8 @@ bool SyntaxAnalysis::loopStatement()
 			return false;
 		}
 
+		bool minus = (symbolCode == MINU) ? true : false;
+
 		getNext();
 
 		if (!step())
@@ -1925,17 +1964,26 @@ bool SyntaxAnalysis::loopStatement()
 			return false;
 		}
 
+		int value = (minus) ? -currentValue : currentValue;
+
 		if (!hasNext || symbolCode != RPARENT)
 		{
 			errorHandler.error(errorLine, L);
 			lexicalAnalysis.setAutoComplete();
 		}
+		
+		
 
+		tempCode.add(Quaternion(quaternion::LABLE, "", "", lable2));
 		getNext();
 		if (!statement())
 		{
 			return false;
 		}
+		tempCode.add(Quaternion(quaternion::ADD, id2, to_string(value), id1));
+
+		tempCode.add(Quaternion(quaternion::JUMP, "", "", lable1));
+		tempCode.add(Quaternion(quaternion::LABLE, "", "", lable3));
 	}
 
 	output.syntaxAnalysisOutput("循环语句");
@@ -1969,12 +2017,18 @@ bool SyntaxAnalysis::ifStatement()
 		return false;
 	}
 
+	string lable1 = tempCode.genLable();
+	string lable2 = tempCode.genLable();
+	string lable3 = tempCode.genLable();
+
 	getNext();
-	if (!condition())
+	if (!condition(lable1))
 	{
 		errorHandler.syntaxError(lexicalAnalysis.getLineCount(), __func__);
 		return false;
 	}
+
+	tempCode.add(Quaternion(quaternion::JUMP, "", "", lable2));
 
 	if (!hasNext || symbolCode != RPARENT)
 	{
@@ -1982,12 +2036,17 @@ bool SyntaxAnalysis::ifStatement()
 		lexicalAnalysis.setAutoComplete();
 	}
 
+	tempCode.add(Quaternion(quaternion::LABLE, "", "", lable1));
 	getNext();
 	if (!statement())
 	{
 
 		return false;
 	}
+
+	tempCode.add(Quaternion(quaternion::JUMP, "", "", lable3));
+	
+	tempCode.add(Quaternion(quaternion::LABLE, "", "", lable2));
 
 	if (symbolCode == ELSETK)
 	{
@@ -1998,13 +2057,15 @@ bool SyntaxAnalysis::ifStatement()
 			return false;
 		}
 	}
+	
+	tempCode.add(Quaternion(quaternion::LABLE, "", "", lable3));
 
 	output.syntaxAnalysisOutput("条件语句");
 	return true;
 }
 
 /*＜条件＞    ::=  ＜表达式＞＜关系运算符＞＜表达式＞*/
-bool SyntaxAnalysis::condition()
+bool SyntaxAnalysis::condition(string lable)
 {
 	if (!expression())
 	{
@@ -2014,6 +2075,9 @@ bool SyntaxAnalysis::condition()
 	{
 		errorHandler.error(lexicalAnalysis.getLineCount(), F);
 	}
+
+	string left = tempCode.getDest();
+
 	if (!relationOp())
 	{
 		return false;
@@ -2028,6 +2092,9 @@ bool SyntaxAnalysis::condition()
 		errorHandler.error(lexicalAnalysis.getLineCount(), F);
 	}
 
+	string right = tempCode.getDest();
+
+	tempCode.genBranch(left, right, lable);
 	output.syntaxAnalysisOutput("条件");
 	return true;
 }
@@ -2311,6 +2378,7 @@ bool SyntaxAnalysis::factor()
 				{
 					exprType = temp;
 				}
+				tempCode.setDest("_funcRet");
 				output.syntaxAnalysisOutput("因子");
 				return true;
 			}
@@ -2402,6 +2470,8 @@ bool SyntaxAnalysis::callFunction()
 		errorHandler.error(lexicalAnalysis.getLineCount(), D);
 	}
 
+	tempCode.add(Quaternion(quaternion::CALLFUNCTION, "", "", callFunctionName));
+
 	getNext();
 	if (symbolTable.hasRet(callFunctionName))
 	{
@@ -2444,6 +2514,8 @@ bool SyntaxAnalysis::parameterValueTable()
 	{
 		errorHandler.error(lexicalAnalysis.getLineCount(), E);
 	}
+
+	tempCode.add(Quaternion(quaternion::PUSHPARA, to_string(parameterNumber), tempCode.getDest(), ""));
 	parameterNumber++;
 
 	while (true)
@@ -2464,6 +2536,7 @@ bool SyntaxAnalysis::parameterValueTable()
 		{
 			errorHandler.error(lexicalAnalysis.getLineCount(), E);
 		}
+		tempCode.add(Quaternion(quaternion::PUSHPARA, to_string(parameterNumber), tempCode.getDest(), ""));
 		parameterNumber++;
 	}
 
@@ -2759,6 +2832,8 @@ bool SyntaxAnalysis::switchStatement()
 		return false;
 	}
 
+	string endLable = tempCode.genLable();
+
 	getNext();
 	if (!hasNext || symbolCode != LPARENT)
 	{
@@ -2770,6 +2845,8 @@ bool SyntaxAnalysis::switchStatement()
 	{
 		return false;
 	}
+
+	string switchItem = tempCode.getDest();
 
 	if (!hasNext || symbolCode != RPARENT)
 	{
@@ -2783,16 +2860,21 @@ bool SyntaxAnalysis::switchStatement()
 		return false;
 	}
 
+	string lastLable;
 	getNext();
-	if (!caseTable())
+	if (!caseTable(switchItem, lastLable, endLable))
 	{
 		return false;
 	}
+
+	tempCode.add(Quaternion(quaternion::LABLE, "", "", lastLable));
+
 	if (!defaultStatement())
 	{
 		errorHandler.error(lexicalAnalysis.getLineCount(), P);
 	}
 
+	tempCode.add(Quaternion(quaternion::LABLE, "", "", endLable));
 	if (!hasNext || symbolCode != RBRACE)
 	{
 		return false;
@@ -2804,32 +2886,45 @@ bool SyntaxAnalysis::switchStatement()
 }
 
 /*＜情况表＞   ::=  ＜情况子语句＞{＜情况子语句＞} */
-bool SyntaxAnalysis::caseTable()
+bool SyntaxAnalysis::caseTable(string switchItem, string& lastLable,string endLable)
 {
 	SymbolTableItemType temp = exprType;
-	if (!caseStatement(temp))
+
+	string lable1 = tempCode.genLable();
+	string lable2 = tempCode.genLable();
+
+	if (!caseStatement(temp, switchItem, lable1, lable2))
 	{
 		return false;
 	}
+
+	tempCode.add(Quaternion(quaternion::JUMP, "", "", endLable));
 	while (true)
 	{
-		if (!caseStatement(temp))
+		lable1 = lable2;
+		string lable3 = tempCode.genLable();
+		if (!caseStatement(temp, switchItem, lable1, lable3))
 		{
 			break;
 		}
+		lable2 = lable3;
+		tempCode.add(Quaternion(quaternion::JUMP, "", "", endLable));
 	}
 	
+	lastLable = lable2;
 	output.syntaxAnalysisOutput("情况表");
 	return true;
 }
 
 /*＜情况子语句＞  ::=  case＜常量＞：＜语句＞ */
-bool SyntaxAnalysis::caseStatement(SymbolTableItemType type)
+bool SyntaxAnalysis::caseStatement(SymbolTableItemType type, string switchItem, string thisLable, string nextLable)
 {
 	if (!hasNext || symbolCode != CASETK)
 	{
 		return false;
 	}
+
+	tempCode.add(Quaternion(quaternion::LABLE, "", "", thisLable));
 
 	getNext();
 
@@ -2847,6 +2942,14 @@ bool SyntaxAnalysis::caseStatement(SymbolTableItemType type)
 		}
 	}
 
+	if (type == INT)
+	{
+		tempCode.add(Quaternion(quaternion::NEQ, switchItem, to_string(currentValue), nextLable));
+	}
+	else
+	{
+		tempCode.add(Quaternion(quaternion::NEQ, switchItem, to_string(currentChar), nextLable));
+	}
 	if (!hasNext || symbolCode != COLON)
 	{
 		return false;
@@ -2926,6 +3029,9 @@ bool SyntaxAnalysis::returnStatement()
 
 		getNext();
 		retStatement = true;
+		
+		tempCode.add(Quaternion(quaternion::RETURN, "", "", tempCode.getDest()));
+
 		output.syntaxAnalysisOutput("返回语句");
 		return true;
 	}
@@ -2934,6 +3040,8 @@ bool SyntaxAnalysis::returnStatement()
 	{
 		errorHandler.error(lexicalAnalysis.getLineCount(), H);
 	}
+
+	tempCode.add(Quaternion(quaternion::RETURN, "", "", ""));
 	retStatement = true;
 	output.syntaxAnalysisOutput("返回语句");
 	return true;
@@ -3055,6 +3163,7 @@ bool SyntaxAnalysis::relationOp()
 	if (symbolCode == LSS || symbolCode == LEQ || symbolCode == GRE ||
 		symbolCode == GEQ || symbolCode == NEQ || symbolCode == EQL)
 	{
+		tempCode.relationOp = symbolCode;
 		getNext();
 		return true;
 	}

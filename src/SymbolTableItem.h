@@ -103,6 +103,10 @@ public:
 	int column = 1;
 	int currentRow = 0;
 	int currentColumn = 0;
+	string getName()
+	{
+		return name;
+	}
 };
 
 #endif // !_SYMBOL_TABLE_ITEM_H_

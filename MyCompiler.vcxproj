@@ -166,6 +166,10 @@
     <ClCompile Include="src\SyntaxAnalysis.cpp" />
     <ClCompile Include="src\TempCode.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="tempCode.txt" />
+    <Text Include="testfile.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

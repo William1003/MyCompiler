@@ -82,6 +82,39 @@ string Quaternion::toString()
 	case quaternion::GETARRAY:
 		s = "getarray " + dest + " = " + oper1 + "[" + oper2 + "]";
 		break;
+	case quaternion::LABLE:
+		s = dest + ":";
+		break;
+	case quaternion::JUMP:
+		s = "jump " + dest;
+		break;
+	case quaternion::LSS:
+		s = "branch " + oper1 + " < " + oper2 + " to " + dest;
+		break;
+	case quaternion::LEQ:
+		s = "branch " + oper1 + " <= " + oper2 + " to " + dest;
+		break;
+	case quaternion::GRE:
+		s = "branch " + oper1 + " > " + oper2 + " to " + dest;
+		break;
+	case quaternion::GEQ:
+		s = "branch " + oper1 + " >= " + oper2 + " to " + dest;
+		break;
+	case quaternion::EQL:
+		s = "branch " + oper1 + " == " + oper2 + " to " + dest;
+		break;
+	case quaternion::NEQ:
+		s = "branch " + oper1 + " != " + oper2 + " to " + dest;
+		break;
+	case quaternion::PUSHPARA:
+		s = "pushpara" + oper1 + " " + oper2;
+		break;
+	case quaternion::CALLFUNCTION:
+		s = "call " + dest;
+		break;
+	case quaternion::RETURN:
+		s = "return " + dest;
+		break;
 	default:
 		break;
 	}

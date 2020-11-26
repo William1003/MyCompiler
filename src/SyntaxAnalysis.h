@@ -61,11 +61,11 @@ public:
 	bool scanfStatement();		//读语句
 	bool printfStatement();		//写语句
 	bool switchStatement();		//情况语句
-	bool caseTable();			//情况表
-	bool caseStatement(SymbolTableItemType type);		//情况子语句
+	bool caseTable(string switchItem, string& lastLable, string endLable);			//情况表
+	bool caseStatement(SymbolTableItemType type, string switchItem, string thisLable, string nextLable);		//情况子语句
 	bool returnStatement();		//返回语句
 	bool defaultStatement();	//缺省
-	bool condition();			//条件
+	bool condition(string lable);			//条件
 	bool expression();			//表达式
 	bool relationOp();			//关系运算符
 	bool term();				//项

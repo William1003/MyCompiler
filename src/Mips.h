@@ -7,7 +7,7 @@
 #include"SymbolTable.h"
 #include"Quaternion.h"
 #define REG_NUM 10
-
+#include<stack>
 using namespace std;
 
 class Mips
