@@ -1418,6 +1418,8 @@ bool SyntaxAnalysis::functionWithRet()
 	}
 
 	SymbolTableItem function = SymbolTableItem(currentDomain, temp, parameterNumber);
+	function.setParaNum(parameterNumber);
+	parameterNumber = 0;
 	if (!symbolTable.push(function))
 	{
 		errorHandler.error(lexicalAnalysis.getLineCount(), B);
@@ -1618,6 +1620,8 @@ bool SyntaxAnalysis::functionWithoutRet()
 		return false;
 	}
 
+	tempCode.add(Quaternion(quaternion::FUNCTION, "void", currentIdentifier, ""));
+
 	getNext();
 	if (!parameterTable())
 	{
@@ -1625,6 +1629,8 @@ bool SyntaxAnalysis::functionWithoutRet()
 	}
 
 	SymbolTableItem function = SymbolTableItem(currentDomain, VOID, parameterNumber);
+	function.setParaNum(parameterNumber);
+	parameterNumber = 0;
 	if (!symbolTable.push(function))
 	{
 		errorHandler.error(lexicalAnalysis.getLineCount(), B);
@@ -2378,7 +2384,9 @@ bool SyntaxAnalysis::factor()
 				{
 					exprType = temp;
 				}
-				tempCode.setDest("_funcRet");
+				string t = tempCode.genTempVar(currentDomain);
+				tempCode.add(Quaternion(quaternion::ASSIGN, t, "_funcRet", ""));
+				tempCode.setDest(t);
 				output.syntaxAnalysisOutput("因子");
 				return true;
 			}
@@ -2515,7 +2523,7 @@ bool SyntaxAnalysis::parameterValueTable()
 		errorHandler.error(lexicalAnalysis.getLineCount(), E);
 	}
 
-	tempCode.add(Quaternion(quaternion::PUSHPARA, to_string(parameterNumber), tempCode.getDest(), ""));
+	tempCode.add(Quaternion(quaternion::PUSHPARA, to_string(parameterNumber), tempCode.getDest(), callFunctionName));
 	parameterNumber++;
 
 	while (true)
@@ -2536,7 +2544,7 @@ bool SyntaxAnalysis::parameterValueTable()
 		{
 			errorHandler.error(lexicalAnalysis.getLineCount(), E);
 		}
-		tempCode.add(Quaternion(quaternion::PUSHPARA, to_string(parameterNumber), tempCode.getDest(), ""));
+		tempCode.add(Quaternion(quaternion::PUSHPARA, to_string(parameterNumber), tempCode.getDest(), callFunctionName));
 		parameterNumber++;
 	}
 

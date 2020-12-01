@@ -11,6 +11,35 @@ Mips::Mips(TempCode& tempCode, SymbolTable& symbolTable) : tempCode(tempCode), s
 	mips.open("mips.txt");
 }
 
+void Mips::pushPara(Quaternion q, string currentDomain)
+{
+	int paraNum = atoi(q.oper1.c_str());
+	bool inReg = false;
+	string value;
+	loadValue("$t0", q.oper2, currentDomain, false, value, inReg);
+	if (paraNum > 3)
+	{
+		if (!inReg)
+		{
+			mips << "li $t0 " << value << endl;
+		}
+		mips << "sw $t0 " << to_string(-4 * paraNum - 8) << "($sp)" << endl;
+	}
+	else
+	{
+		if (inReg)
+		{
+			mips << "move $a" << to_string(paraNum) << " $t0" << endl;
+		}
+		else
+		{
+			mips << "li $t0 " << value << endl;
+			mips << "li $a" << to_string(paraNum) << " " << value << endl;
+		}
+		mips << "sw $t0 " << to_string(-4 * paraNum - 8) << "($sp)" << endl;
+	}
+}
+
 int Mips::findFreeTReg()
 {
 	for (int i = 0; i < REG_NUM; i++)
@@ -32,7 +61,7 @@ void Mips::freeReg(int i)
 void Mips::loadValue(string regName, string name, string domain, bool loadConst, string& value, bool& inReg)
 {
 	// 是符号
-	if (name == "_functionRet")
+	if (name == "_funcRet")
 	{
 		mips << "move " << regName << " $v0" << endl;
 		inReg = true;
@@ -174,7 +203,8 @@ void Mips::generate()
 				}
 				else if (!inReg1 && inReg2)
 				{
-					mips << "subi $t2 $t1 " << value1 << endl;;
+					mips << "li $t0 " << value1 << endl;
+					mips << "sub $t2 $t0 $t1" << endl;;
 				}
 				else
 				{
@@ -251,8 +281,8 @@ void Mips::generate()
 			}
 			if (q.op == quaternion::READCHAR)
 			{
-				mips << "li $v0 12" << endl;
-				mips << "syscall" << endl;
+				// mips << "li $v0 12" << endl;
+				// mips << "syscall" << endl;
 			}
 			break;
 		}
@@ -441,7 +471,7 @@ void Mips::generate()
 			}
 			else
 			{
-				mips << "move $t0 $sp" << endl;
+				mips << "move $t0 $fp" << endl;
 				mips << "addi $t0 $t0 " << to_string(-item.addr * 4) << endl;
 			}
 			string value1, value2;
@@ -490,7 +520,7 @@ void Mips::generate()
 			}
 			else
 			{
-				mips << "move $t0 $sp" << endl;
+				mips << "move $t0 $fp" << endl;
 				mips << "addi $t0 $t0 " << to_string(-item.addr * 4) << endl;
 			}
 			string value;
@@ -526,6 +556,7 @@ void Mips::generate()
 				mips << "lw $t0 0($t0)" << endl;
 				saveValue(q.dest, currentDomain, "$t0");
 			}
+			break;
 		}
 		case quaternion::LABLE:
 		{
@@ -625,38 +656,25 @@ void Mips::generate()
 			default:
 				break;
 			}
+			break;
 		}
 		case quaternion::PUSHPARA:
 		{
-			int paraNum = atoi(q.oper1.c_str());
-			bool inReg = false;
-			string value;
-			loadValue("$t0", q.oper2, currentDomain, false, value, inReg);
-			if (paraNum > 3)
-			{
-				if (!inReg)
-				{
-					mips << "li $t0 " << value << endl;
-				}
-				mips << "sw $t0 " << to_string(-4 * paraNum - 8) << "($sp)" << endl;
-			}
-			else
-			{
-				if (inReg)
-				{
-					mips << "move $a" << to_string(paraNum) << " $t0" << endl;
-				}
-				else
-				{
-					mips << "li $t0 " << value << endl;
-					mips << "li $a" << to_string(paraNum) << " " << value << endl;
-				}
-				mips << "sw $t0 " << to_string(-4 * paraNum - 8) << "($sp)" << endl;
-			}
+			pushParaStack.push(q);
 			break;
 		}
 		case quaternion::CALLFUNCTION:
 		{
+			string functionName = q.dest;
+			SymbolTableItem function = symbolTable.getItem(functionName, "0");
+			int paraNum = function.getParaCount();
+			for (int i = 0; i < paraNum; i++)
+			{
+				Quaternion temp = pushParaStack.top();
+				pushPara(temp, currentDomain);
+				pushParaStack.pop();
+			}
+
 			mips << "addi $sp $sp -8" << endl;
 			mips << "sw $ra 4($sp)" << endl;
 			mips << "sw $fp 8($sp)" << endl;
@@ -671,16 +689,24 @@ void Mips::generate()
 		}
 		case quaternion::RETURN:
 		{
-			int varCount = symbolTable.addrCount[currentDomain];
-			mips << "addi $sp $sp " << to_string(varCount * 4) << endl;
-			string value;
-			bool inReg = false;
-			if (q.dest != "")
+			if (currentDomain == "main")
 			{
-				loadValue("$v0", q.dest, currentDomain, true, value, inReg);
+				mips << "li $v0 10" << endl;
+				mips << "syscall" << endl;
 			}
+			else
+			{
+				int varCount = symbolTable.addrCount[currentDomain];
+				mips << "addi $sp $sp " << to_string(varCount * 4) << endl;
+				string value;
+				bool inReg = false;
+				if (q.dest != "")
+				{
+					loadValue("$v0", q.dest, currentDomain, true, value, inReg);
+				}
 
-			mips << "jr $ra" << endl;
+				mips << "jr $ra" << endl;
+			}
 			break;
 		}
 		default:

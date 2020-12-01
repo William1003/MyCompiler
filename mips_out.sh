@@ -1,0 +1,1 @@
+cat input.txt | java -jar Mars-jdk7-Re-2020-v2.jar nc myMips.asm > out.txt
