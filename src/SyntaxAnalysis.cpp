@@ -2446,14 +2446,6 @@ bool SyntaxAnalysis::callFunction()
 	currentIdentifier = lexicalAnalysis.getToken();
 	callFunctionName = currentIdentifier;
 
-	bool hasFunction = symbolTable.hasFunction(currentIdentifier);
-	if (!hasFunction)
-	{
-		errorHandler.error(lexicalAnalysis.getLineCount(), C);
-	}
-
-	SymbolTableItem& function = symbolTable.getCurrent();
-
 	getNext();
 	if (symbolCode != LPARENT)
 	{
@@ -2465,6 +2457,16 @@ bool SyntaxAnalysis::callFunction()
 	{
 		return false;
 	}
+
+	currentIdentifier = callFunctionName;
+
+	bool hasFunction = symbolTable.hasFunction(currentIdentifier);
+	if (!hasFunction)
+	{
+		errorHandler.error(lexicalAnalysis.getLineCount(), C);
+	}
+
+	SymbolTableItem& function = symbolTable.getCurrent();
 
 	if (!hasNext || symbolCode != RPARENT)
 	{

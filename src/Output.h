@@ -14,6 +14,7 @@ private:
 	string outputContent;
 	string backupString;
 	ofstream debugFile;
+	ofstream debug;
 
 public:
 	Output(string& ofname);
@@ -29,6 +30,7 @@ public:
 
 	void retract(int line);
 	void outputToFile();
+	void printChar(char c);
 };
 
 #endif // !_OUTPUT_H_

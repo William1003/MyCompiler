@@ -29,6 +29,10 @@ void LexicalAnalysis::getChar()
 	else
 	{
 		c = fileContent[index++];
+		if (!pre)
+		{
+			// output.printChar(c);
+		}
 	}
 	if (index >= fileLength) 
 	{
@@ -147,6 +151,7 @@ SymbolCode LexicalAnalysis::reserver(string& token) {
 
 bool LexicalAnalysis::getNextSymbol() 
 {
+	pre = false;
 	if (!token.empty())
 	{
 		output.lexicalAnalysisOutput(symbolCode, token);
@@ -464,6 +469,7 @@ bool LexicalAnalysis::isCharacter()
 
 SymbolCode LexicalAnalysis::preRead()
 {
+	pre = true;
 	string s;
 	s.clear();
 	//清空token，读取第一个字符

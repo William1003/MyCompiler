@@ -14,6 +14,7 @@ Output::Output(string& ofname)
 		exit(EXIT_SUCCESS);
 	}
 	debugFile.open("debug.txt", ios::out);
+	debug.open("current.txt", ios::out);
 }
 
 void Output::lexicalAnalysisOutput(SymbolCode symbolCode, string token)
@@ -60,4 +61,11 @@ void Output::outputToFile()
 	out << outputContent;
 	out.close();
 	debugFile.close();
+	debug.close();
+}
+
+void Output::printChar(char c)
+{
+	debug << c;
+	debug.flush();
 }
