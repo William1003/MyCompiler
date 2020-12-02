@@ -1465,6 +1465,7 @@ bool SyntaxAnalysis::functionWithRet()
 
 	getNext();
 	
+	tempCode.add(Quaternion(quaternion::RETURN, "", "", ""));
 	tempCode.add(Quaternion(quaternion::BLANK, "", "", ""));
 	output.syntaxAnalysisOutput("有返回值函数定义");
 	return true;
@@ -1662,10 +1663,8 @@ bool SyntaxAnalysis::functionWithoutRet()
 	}
 
 	getNext();
-	if (!retStatement)
-	{
-		tempCode.add(Quaternion(quaternion::RETURN, "", "", ""));
-	}
+
+	tempCode.add(Quaternion(quaternion::RETURN, "", "", ""));
 
 	tempCode.add(Quaternion(quaternion::BLANK, "", "", ""));
 

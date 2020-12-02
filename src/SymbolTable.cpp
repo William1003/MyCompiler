@@ -1,4 +1,5 @@
 #include "SymbolTable.h"
+#include <algorithm>
 
 SymbolTable::SymbolTable()
 {
@@ -11,6 +12,7 @@ SymbolTable::SymbolTable()
 
 bool SymbolTable::hasItem(string name, string domain)
 {
+	transform(name.begin(), name.end(), name.begin(), ::tolower);
 	if (domain != "0")
 	{
 		for (int i = count - 1; i > 0; i--)

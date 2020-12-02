@@ -31,9 +31,11 @@ public:
 	string subreplace(string resource_str, string sub_str, string new_str)
 	{
 		string::size_type pos = 0;
-		while ((pos = resource_str.find(sub_str)) != string::npos)   //替换所有指定子串
+		int begin = 0;
+		while ((pos = resource_str.find(sub_str, begin)) != string::npos)   //替换所有指定子串
 		{
 			resource_str.replace(pos, sub_str.length(), new_str);
+			begin += new_str.length();
 		}
 		return resource_str;
 	}

@@ -1,5 +1,6 @@
 #include"Mips.h"
 #include <iostream>
+#include <algorithm>
 
 #define NEWLINE do {mips << "la $a0 newLine" << endl;\
 					mips << "li $v0 4" << endl;\
@@ -133,6 +134,7 @@ void Mips::generate()
 		Quaternion q = tempCode.quaternions[i];
 		if (q.op == quaternion::PRINTS || q.op == quaternion::PRINTSV)
 		{
+			// q.oper1 = subreplace(q.oper1, "\n", "\\n");
 			mips << "\tstring" << to_string(strCount++) << ":.asciiz " << "\"" << q.oper1 << "\"" << endl;
 		}
 	}
@@ -456,6 +458,7 @@ void Mips::generate()
 				mips << "j main" << endl;
 				jMainFlag = true;
 			}
+			transform(q.oper2.begin(), q.oper2.end(), q.oper2.begin(), ::tolower);
 			mips << q.oper2 << ":" << endl;
 			mips << "move $fp $sp" << endl;
 			mips << "addi $sp $sp " << to_string(-varCount * 4) << endl;
@@ -560,11 +563,13 @@ void Mips::generate()
 		}
 		case quaternion::LABLE:
 		{
+			transform(q.dest.begin(), q.dest.end(), q.dest.begin(), ::tolower);
 			mips << q.dest << ":" << endl;
 			break;
 		}
 		case quaternion::JUMP:
 		{
+			transform(q.dest.begin(), q.dest.end(), q.dest.begin(), ::tolower);
 			mips << "j " << q.dest << endl;
 			break;
 		}
@@ -674,6 +679,7 @@ void Mips::generate()
 				pushPara(temp, currentDomain);
 				pushParaStack.pop();
 			}
+			transform(q.dest.begin(), q.dest.end(), q.dest.begin(), ::tolower);
 
 			mips << "addi $sp $sp -8" << endl;
 			mips << "sw $ra 4($sp)" << endl;

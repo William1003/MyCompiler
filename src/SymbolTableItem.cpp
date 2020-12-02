@@ -81,12 +81,18 @@ string SymbolTableItem::getAttr()
 
 bool SymbolTableItem::isItemInDomain(string name, string domain)
 {
-	return this->name == name && this->domain == domain;
+	string lowcase = this->name;
+	transform(lowcase.begin(), lowcase.end(), lowcase.begin(), ::tolower);
+	transform(name.begin(), name.end(), name.begin(), ::tolower);
+	return lowcase == name && this->domain == domain;
 }
 
 bool SymbolTableItem::isFunction(string name)
 {
-	return this->name == name && kind == FUNCTION;
+	string lowcase = this->name;
+	transform(lowcase.begin(), lowcase.end(), lowcase.begin(), ::tolower);
+	transform(name.begin(), name.end(), name.begin(), ::tolower);
+	return lowcase == name && kind == FUNCTION;
 }
 
 int SymbolTableItem::getParaCount()

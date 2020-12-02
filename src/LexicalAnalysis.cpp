@@ -352,6 +352,10 @@ bool LexicalAnalysis::getNextSymbol()
 		while (!isDoubleq(c)) 
 		{
 			token += c;
+			if (c == '\\')
+			{
+				token += '\\';
+			}
 			if (!(c == 32 || c == 33 || (c >= 35 && c <= 126)))
 			{
 				errorHandler.error(line, A);
