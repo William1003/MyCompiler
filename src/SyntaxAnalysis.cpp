@@ -712,6 +712,21 @@ bool SyntaxAnalysis::varWithoutInit()
 			tempCode.add(Quaternion(quaternion::VARCHAR, currentIdentifier, "", ""));
 		}
 	}
+	else if (dimension == 1 && symbolCode == COMMA)
+	{
+		if (!symbolTable.push(SymbolTableItem(currentIdentifier, currentDomain, tempType, dimension, row, column)))
+		{
+			errorHandler.error(lexicalAnalysis.getLineCount(), B);
+		}
+		if (tempType == INT)
+		{
+			tempCode.add(Quaternion(quaternion::ARRAY1INT, currentIdentifier, "", ""));
+		}
+		else if (tempType == CHAR)
+		{
+			tempCode.add(Quaternion(quaternion::ARRAY1CHAR, currentIdentifier, "", ""));
+		}
+	}
 
 	while (true)
 	{
@@ -1249,11 +1264,11 @@ bool SyntaxAnalysis::varWithInit()
 
 		if (tempType == INT)
 		{
-			tempCode.add(Quaternion(quaternion::ARRAYASSIGN, to_string(item.currentRow * item.column + item.currentColumn), to_string(currentValue), currentIdentifier));
+			tempCode.add(Quaternion(quaternion::ARRAYASSIGN, to_string(item.currentColumn), to_string(currentValue), currentIdentifier));
 		}
 		else
 		{
-			tempCode.add(Quaternion(quaternion::ARRAYASSIGN, to_string(item.currentRow * item.column + item.currentColumn), to_string(currentChar), currentIdentifier));
+			tempCode.add(Quaternion(quaternion::ARRAYASSIGN, to_string(item.currentColumn), to_string(currentChar), currentIdentifier));
 		}
 
 		bool addRes = (tempType == INT) ? item.addValue(currentValue) : item.addValue(currentChar);
@@ -1286,11 +1301,11 @@ bool SyntaxAnalysis::varWithInit()
 
 			if (tempType == INT)
 			{
-				tempCode.add(Quaternion(quaternion::ARRAYASSIGN, to_string(item.currentRow * item.column + item.currentColumn), to_string(currentValue), currentIdentifier));
+				tempCode.add(Quaternion(quaternion::ARRAYASSIGN, to_string(item.currentColumn), to_string(currentValue), currentIdentifier));
 			}
 			else
 			{
-				tempCode.add(Quaternion(quaternion::ARRAYASSIGN, to_string(item.currentRow * item.column + item.currentColumn), to_string(currentChar), currentIdentifier));
+				tempCode.add(Quaternion(quaternion::ARRAYASSIGN, to_string(item.currentColumn), to_string(currentChar), currentIdentifier));
 			}
 
 			bool addRes = (tempType == INT) ? item.addValue(currentValue) : item.addValue(currentChar);
@@ -2362,7 +2377,7 @@ bool SyntaxAnalysis::factor()
 					return true;
 				}
 				string tempDest = tempCode.genTempVar(currentDomain);
-				tempCode.add(Quaternion(quaternion::GETARRAY, tempIdentifier, tempCode.getDest(), tempDest));
+				tempCode.add(Quaternion(quaternion::GETARRAY, tempIdentifier, index1, tempDest));
 				tempCode.setDest(tempDest);
 				exprType = temp;
 				output.syntaxAnalysisOutput("因子");
@@ -2384,14 +2399,13 @@ bool SyntaxAnalysis::factor()
 					exprType = temp;
 				}
 				string t = tempCode.genTempVar(currentDomain);
-				tempCode.add(Quaternion(quaternion::ASSIGN, t, "_funcRet", ""));
+				tempCode.add(Quaternion(quaternion::ASSIGN, t, "0_funcRet", ""));
 				tempCode.setDest(t);
 				output.syntaxAnalysisOutput("因子");
 				return true;
 			}
 			return false;
 		}
-		
 	}
 	if (symbolCode == LPARENT)
 	{
@@ -2458,9 +2472,7 @@ bool SyntaxAnalysis::callFunction()
 		return false;
 	}
 
-	currentIdentifier = callFunctionName;
-
-	bool hasFunction = symbolTable.hasFunction(currentIdentifier);
+	bool hasFunction = symbolTable.hasFunction(callFunctionName);
 	if (!hasFunction)
 	{
 		errorHandler.error(lexicalAnalysis.getLineCount(), C);
@@ -3126,7 +3138,7 @@ SymbolTableItemType SyntaxAnalysis::constant()
 	}
 	else
 	{
-		currentChar = lexicalAnalysis.getToken().c_str()[0];
+		currentChar = lexicalAnalysis.getToken()[0];
 		
 		getNext();
 		output.syntaxAnalysisOutput("常量");
@@ -3144,7 +3156,7 @@ bool SyntaxAnalysis::character()
 	if (symbolCode == CHARCON && lexicalAnalysis.isCharacter())
 	{
 		exprType = CHAR;
-		currentChar = lexicalAnalysis.getToken().c_str()[0];
+		currentChar = lexicalAnalysis.getToken()[0];
 		getNext();
 		return true;
 	}

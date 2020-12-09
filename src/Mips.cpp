@@ -62,7 +62,7 @@ void Mips::freeReg(int i)
 void Mips::loadValue(string regName, string name, string domain, bool loadConst, string& value, bool& inReg)
 {
 	// 是符号
-	if (name == "_funcRet")
+	if (name == "0_funcRet")
 	{
 		mips << "move " << regName << " $v0" << endl;
 		inReg = true;
@@ -155,15 +155,15 @@ void Mips::generate()
 			loadValue("$t1", q.oper2, currentDomain, false, value2, inReg2);
 			if (inReg1 && inReg2)
 			{
-				mips << "add $t2 $t0 $t1" << endl;
+				mips << "addu $t2 $t0 $t1" << endl;
 			}
 			else if(inReg1 && !inReg2)
 			{
-				mips << "addi $t2 $t0 " << value2 << endl;
+				mips << "addiu $t2 $t0 " << value2 << endl;
 			}
 			else if (!inReg1 && inReg2)
 			{
-				mips << "addi $t2 $t1 " << value1 << endl;;
+				mips << "addiu $t2 $t1 " << value1 << endl;;
 			}
 			else
 			{
@@ -185,28 +185,28 @@ void Mips::generate()
 			{
 				if (inReg2)
 				{
-					mips << "sub $t2 $0 $t1" << endl;
+					mips << "subu $t2 $0 $t1" << endl;
 				}
 				else
 				{
 					int v2 = -atoi(value2.c_str());
-					mips << "addi $t2 $0 " << to_string(v2) << endl;
+					mips << "addiu $t2 $0 " << to_string(v2) << endl;
 				}
 			}
 			else
 			{
 				if (inReg1 && inReg2)
 				{
-					mips << "sub $t2 $t0 $t1" << endl;
+					mips << "subu $t2 $t0 $t1" << endl;
 				}
 				else if (inReg1 && !inReg2)
 				{
-					mips << "subi $t2 $t0 " << value2 << endl;;
+					mips << "subiu $t2 $t0 " << value2 << endl;
 				}
 				else if (!inReg1 && inReg2)
 				{
 					mips << "li $t0 " << value1 << endl;
-					mips << "sub $t2 $t0 $t1" << endl;;
+					mips << "subu $t2 $t0 $t1" << endl;
 				}
 				else
 				{
@@ -295,7 +295,8 @@ void Mips::generate()
 			NEWLINE;
 			break;
 		case quaternion::PRINTVAR:
-			if (q.oper1 == "_funcRet")
+		{
+			if (q.oper1 == "0_funcRet")
 			{
 				mips << "move $a0 $v0" << endl;
 				if (q.dest == "char")
@@ -365,12 +366,13 @@ void Mips::generate()
 				}
 			}
 			break;
+		}
 		case quaternion::PRINTSV:
 		{
 			mips << "la $a0 string" << to_string(strCount++) << endl;
 			mips << "li $v0 4" << endl;
 			mips << "syscall" << endl;
-			if (q.oper1 == "_funcRet")
+			if (q.oper2 == "0_funcRet")
 			{
 				mips << "move $a0 $v0" << endl;
 				if (q.dest == "char")
@@ -469,13 +471,11 @@ void Mips::generate()
 			SymbolTableItem item = symbolTable.getItem(q.dest, currentDomain);
 			if (item.getDomain() == "0")
 			{
-				mips << "move $t0 $gp " << endl;
-				mips << "addi $t0 $t0 " << to_string(item.addr * 4) << endl;
+				mips << "addiu $t0 $gp " << to_string(item.addr * 4) << endl;
 			}
 			else
 			{
-				mips << "move $t0 $fp" << endl;
-				mips << "addi $t0 $t0 " << to_string(-item.addr * 4) << endl;
+				mips << "addiu $t0 $fp " << to_string(-item.addr * 4) << endl;
 			}
 			string value1, value2;
 			bool inReg1 = false, inReg2 = false;
@@ -486,16 +486,14 @@ void Mips::generate()
 			int v1 = atoi(value1.c_str());
 			if (inReg1)
 			{
-				mips << "li $t3 4" << endl;
-				mips << "mult $t1 $t3" << endl;
-				mips << "mflo $t3" << endl;
+				mips << "sll $t1 $t1 2" << endl;
 				if (item.getDomain() == "0")
 				{
-					mips << "add $t0 $t0 $t3" << endl;
+					mips << "addu $t0 $t0 $t1" << endl;
 				}
 				else
 				{
-					mips << "sub $t0 $t0 $t3" << endl;
+					mips << "subu $t0 $t0 $t1" << endl;
 				}
 				mips << "sw $t2 0($t0)" << endl;
 			}
@@ -518,13 +516,11 @@ void Mips::generate()
 
 			if (item.getDomain() == "0")
 			{
-				mips << "move $t0 $gp " << endl;
-				mips << "addi $t0 $t0 " << to_string(item.addr * 4) << endl;
+				mips << "addiu $t0 $gp " << to_string(item.addr * 4) << endl;
 			}
 			else
 			{
-				mips << "move $t0 $fp" << endl;
-				mips << "addi $t0 $t0 " << to_string(-item.addr * 4) << endl;
+				mips << "addiu $t0 $fp " << to_string(-item.addr * 4) << endl;
 			}
 			string value;
 			bool inReg = false;
@@ -532,16 +528,15 @@ void Mips::generate()
 			int v = atoi(value.c_str());
 			if (inReg)
 			{
-				mips << "li $t2 4" << endl;
-				mips << "mult $t1 $t2" << endl;
-				mips << "mflo $t1" << endl;
+				// TODO::移位
+				mips << "sll $t1 $t1 2" << endl;
 				if (item.getDomain() == "0")
 				{
-					mips << "add $t0 $t0 $t1" << endl;
+					mips << "addu $t0 $t0 $t1" << endl;
 				}
 				else
 				{
-					mips << "sub $t0 $t0 $t1" << endl;
+					mips << "subu $t0 $t0 $t1" << endl;
 				}
 				mips << "lw $t0 0($t0)" << endl;
 				saveValue(q.dest, currentDomain, "$t0");
@@ -550,11 +545,11 @@ void Mips::generate()
 			{
 				if (item.getDomain() == "0")
 				{
-					mips << "addi $t0 $t0 " << to_string(v * 4) << endl;
+					mips << "addiu $t0 $t0 " << to_string(v * 4) << endl;
 				}
 				else
 				{
-					mips << "addi $t0 $t0 " << to_string(-v * 4) << endl;
+					mips << "addiu $t0 $t0 " << to_string(-v * 4) << endl;
 				}
 				mips << "lw $t0 0($t0)" << endl;
 				saveValue(q.dest, currentDomain, "$t0");
@@ -703,7 +698,7 @@ void Mips::generate()
 			else
 			{
 				int varCount = symbolTable.addrCount[currentDomain];
-				mips << "addi $sp $sp " << to_string(varCount * 4) << endl;
+				mips << "addiu $sp $sp " << to_string(varCount * 4) << endl;
 				string value;
 				bool inReg = false;
 				if (q.dest != "")

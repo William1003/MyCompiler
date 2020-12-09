@@ -6,6 +6,7 @@ using namespace std;
 
 ErrorHandler::ErrorHandler()
 {
+	errorCount = 0;
 	errorFile.open("error.txt");
 	if (!errorFile)
 	{
@@ -17,6 +18,7 @@ ErrorHandler::ErrorHandler()
 
 void ErrorHandler::lexicalError(int line)
 {
+	errorCount++;
 	cout << "LEXICAL ERROR!" << endl;
 	cout << line << " a" << endl;
 	errorFile << line << " a" << endl;
@@ -29,5 +31,6 @@ void ErrorHandler::syntaxError(int line, string functionName)
 
 void ErrorHandler::error(int line, ErrorCode errorCode)
 {
+	errorCount++;
 	errorFile << line << " " << ErrorContent[errorCode] << endl;
 }
